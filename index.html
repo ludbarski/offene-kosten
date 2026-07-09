@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Offene Kosten v2</title>
+    <title>Offene Kosten</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
@@ -15,6 +15,7 @@
             --border: #e8e8e8;
             --danger: #d84f4f;
             --expense: #c0392b;
+            --credit: #1f9d55;
             --income: #1f9d55;
             --sale: #8e44ad;
             --success: #4caf50;
@@ -185,13 +186,15 @@
 
         .summary-cards {
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            border-bottom: 1px solid var(--border);
             background: #fff;
+            border-bottom: 1px solid var(--border);
         }
 
         .month-cards {
             grid-template-columns: 1fr;
             padding-top: 10px;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
         }
 
         .summary-card,
@@ -207,6 +210,11 @@
             border-color: #ffd9d4;
         }
 
+        .summary-card.credit {
+            background: #eefaf3;
+            border-color: #d4f3df;
+        }
+
         .summary-card.income {
             background: #eefaf3;
             border-color: #d4f3df;
@@ -215,6 +223,11 @@
         .summary-card.neutral {
             background: #f7f4f8;
             border-color: #eadbef;
+        }
+
+        .summary-card.sale {
+            background: #f7effb;
+            border-color: #ead6f5;
         }
 
         .summary-label,
@@ -226,7 +239,7 @@
         }
 
         .summary-value {
-            font-size: 1.18rem;
+            font-size: 1.15rem;
             font-weight: 900;
             line-height: 1.2;
         }
@@ -234,6 +247,11 @@
         .summary-value.expense,
         .month-value.expense {
             color: var(--expense);
+        }
+
+        .summary-value.credit,
+        .month-value.credit {
+            color: var(--credit);
         }
 
         .summary-value.income,
@@ -335,6 +353,10 @@
             color: var(--expense);
         }
 
+        .term-amount.credit {
+            color: var(--credit);
+        }
+
         .term-amount.income {
             color: var(--income);
         }
@@ -368,6 +390,7 @@
         .badge {
             display: inline-block;
             margin-top: 8px;
+            margin-right: 6px;
             padding: 5px 10px;
             border-radius: 999px;
             font-size: 0.78rem;
@@ -382,6 +405,26 @@
         .badge.open {
             background: #f8eefe;
             color: var(--primary);
+        }
+
+        .badge.expense {
+            background: #fff0ee;
+            color: var(--expense);
+        }
+
+        .badge.credit {
+            background: #eaf8ee;
+            color: var(--credit);
+        }
+
+        .badge.income {
+            background: #eaf8ee;
+            color: var(--income);
+        }
+
+        .badge.sale {
+            background: #f3eafb;
+            color: var(--sale);
         }
 
         .term-delete {
@@ -512,7 +555,8 @@
         }
 
         .form-group input,
-        .form-group textarea {
+        .form-group textarea,
+        .form-group select {
             width: 100%;
             border: 1px solid #d8d8d8;
             border-radius: 16px;
@@ -529,10 +573,15 @@
         }
 
         .form-group input:focus,
-        .form-group textarea:focus {
+        .form-group textarea:focus,
+        .form-group select:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 4px rgba(145, 12, 147, 0.12);
+        }
+
+        .hidden {
+            display: none !important;
         }
 
         .sheet-actions {
@@ -566,7 +615,7 @@
             .header h1 { font-size: 1.65rem; }
             .term-title { font-size: 1.1rem; }
             .term-meta, .term-note { font-size: 0.98rem; }
-            .summary-value { font-size: 1.24rem; }
+            .summary-value { font-size: 1.22rem; }
         }
     </style>
 </head>
@@ -593,7 +642,7 @@
 
         <div class="tab-content active" data-tab="0">
             <div class="panel-hint">
-                Übersicht über alle Register. In „Alle“ werden <strong>Offene Verkäufe</strong> nur in der Liste angezeigt, aber <strong>nicht</strong> in Gesamteinnahmen und Saldo eingerechnet.
+                Gesamtübersicht ohne „Offene Verkäufe“. Gutschriften werden separat ausgewiesen.
             </div>
             <div class="filter-btns">
                 <button class="filter-btn active" onclick="setFilter(0, 'all', this)">Alle</button>
@@ -601,9 +650,9 @@
                 <button class="filter-btn" onclick="setFilter(0, 'completed', this)">Erledigt</button>
             </div>
             <div class="summary-cards" id="summary0"></div>
-            <div class="terms-section" id="termsList0"></div>
             <div class="section-title">Monatsübersicht</div>
             <div class="month-cards" id="monthCards0"></div>
+            <div class="terms-section" id="termsList0"></div>
         </div>
 
         <div class="tab-content" data-tab="1">
@@ -613,9 +662,9 @@
                 <button class="filter-btn" onclick="setFilter(1, 'completed', this)">Erledigt</button>
             </div>
             <div class="summary-cards" id="summary1"></div>
-            <div class="terms-section" id="termsList1"></div>
-            <div class="section-title">Monatssummen</div>
+            <div class="section-title">Monatsübersicht</div>
             <div class="month-cards" id="monthCards1"></div>
+            <div class="terms-section" id="termsList1"></div>
         </div>
 
         <div class="tab-content" data-tab="2">
@@ -625,9 +674,9 @@
                 <button class="filter-btn" onclick="setFilter(2, 'completed', this)">Erledigt</button>
             </div>
             <div class="summary-cards" id="summary2"></div>
-            <div class="terms-section" id="termsList2"></div>
-            <div class="section-title">Monatssummen</div>
+            <div class="section-title">Monatsübersicht</div>
             <div class="month-cards" id="monthCards2"></div>
+            <div class="terms-section" id="termsList2"></div>
         </div>
 
         <div class="tab-content" data-tab="3">
@@ -637,9 +686,9 @@
                 <button class="filter-btn" onclick="setFilter(3, 'completed', this)">Erledigt</button>
             </div>
             <div class="summary-cards" id="summary3"></div>
-            <div class="terms-section" id="termsList3"></div>
-            <div class="section-title">Monatssummen</div>
+            <div class="section-title">Monatsübersicht</div>
             <div class="month-cards" id="monthCards3"></div>
+            <div class="terms-section" id="termsList3"></div>
         </div>
 
         <div class="tab-content" data-tab="4">
@@ -649,9 +698,9 @@
                 <button class="filter-btn" onclick="setFilter(4, 'completed', this)">Erledigt</button>
             </div>
             <div class="summary-cards" id="summary4"></div>
-            <div class="terms-section" id="termsList4"></div>
-            <div class="section-title">Monatssummen</div>
+            <div class="section-title">Monatsübersicht</div>
             <div class="month-cards" id="monthCards4"></div>
+            <div class="terms-section" id="termsList4"></div>
         </div>
 
         <div class="tab-content" data-tab="5">
@@ -661,9 +710,9 @@
                 <button class="filter-btn" onclick="setFilter(5, 'completed', this)">Erledigt</button>
             </div>
             <div class="summary-cards" id="summary5"></div>
-            <div class="terms-section" id="termsList5"></div>
-            <div class="section-title">Monatssummen</div>
+            <div class="section-title">Monatsübersicht</div>
             <div class="month-cards" id="monthCards5"></div>
+            <div class="terms-section" id="termsList5"></div>
         </div>
     </div>
 
@@ -676,13 +725,21 @@
         <h2 id="sheetTitle">Neuer Eintrag</h2>
         <div class="sheet-hint" id="sheetHint"></div>
 
+        <div class="form-group hidden" id="entryFlowWrap">
+            <label for="entryFlow">Art</label>
+            <select id="entryFlow">
+                <option value="expense" selected>Belastung</option>
+                <option value="credit">Gutschrift</option>
+            </select>
+        </div>
+
         <div class="form-group">
             <label for="entryText">Bezeichnung</label>
             <input type="text" id="entryText" placeholder="z. B. Monatsrate, Rückzahlung, Ebay-Verkauf" />
         </div>
 
         <div class="form-group">
-            <label for="entryAmount" id="amountLabel">Betrag in Euro</label>
+            <label for="entryAmount">Betrag in Euro</label>
             <input type="text" id="entryAmount" inputmode="decimal" placeholder="z. B. 49,90" />
         </div>
 
@@ -704,12 +761,12 @@
 
     <script>
         const TAB_CONFIG = [
-            { name: 'Alle', kind: 'all', amountRequired: false, includeInTotals: false },
-            { name: 'Amazon Rate', kind: 'expense', amountRequired: true, includeInTotals: true },
-            { name: 'Paypal Rate', kind: 'expense', amountRequired: true, includeInTotals: true },
-            { name: 'Kreditkarte', kind: 'expense', amountRequired: true, includeInTotals: true },
-            { name: 'Außenstände', kind: 'income', amountRequired: true, includeInTotals: true },
-            { name: 'Offene Verkäufe', kind: 'sale', amountRequired: false, includeInTotals: false }
+            { name: 'Alle', kind: 'all', amountRequired: false },
+            { name: 'Amazon Rate', kind: 'mixed' },
+            { name: 'Paypal Rate', kind: 'mixed' },
+            { name: 'Kreditkarte', kind: 'mixed' },
+            { name: 'Außenstände', kind: 'income' },
+            { name: 'Offene Verkäufe', kind: 'sale', amountRequired: false }
         ];
 
         const filters = ['all', 'all', 'all', 'all', 'all', 'all'];
@@ -804,26 +861,15 @@
 
         function sortEntries(entries) {
             return [...entries].sort((a, b) => {
-                if (a.completed !== b.completed) {
-                    return Number(a.completed) - Number(b.completed);
-                }
+                if (a.completed !== b.completed) return Number(a.completed) - Number(b.completed);
                 return new Date(a.date) - new Date(b.date);
             });
         }
 
-        function getAmountClass(kind) {
-            if (kind === 'expense') return 'expense';
-            if (kind === 'income') return 'income';
-            return 'sale';
-        }
-
         function updateFab() {
             const fab = document.getElementById('fabBtn');
-            if (currentTab === 0) {
-                fab.classList.add('hidden');
-            } else {
-                fab.classList.remove('hidden');
-            }
+            if (currentTab === 0) fab.classList.add('hidden');
+            else fab.classList.remove('hidden');
         }
 
         function switchTab(tabIndex, btn) {
@@ -856,18 +902,25 @@
             document.getElementById('entryAmount').value = '';
             document.getElementById('entryDate').value = todayString();
             document.getElementById('entryNote').value = '';
+            document.getElementById('entryFlow').value = 'expense';
 
-            const hint = config.amountRequired
-                ? 'Betrag ist erforderlich.'
-                : 'Betrag ist optional. Ohne Betrag wird der Eintrag nicht in Summen eingerechnet.';
+            const flowWrap = document.getElementById('entryFlowWrap');
+            flowWrap.classList.toggle('hidden', config.kind !== 'mixed');
+
+            let hint = 'Betrag ist erforderlich.';
+            if (config.kind === 'mixed') {
+                hint = 'Standard ist Belastung. Für Rückerstattungen bitte aktiv auf Gutschrift umstellen.';
+            }
+            if (config.kind === 'sale') {
+                hint = 'Betrag ist optional. Nur Einträge mit Betrag werden summiert.';
+            }
+
             document.getElementById('sheetHint').textContent = hint;
 
             document.getElementById('sheetBackdrop').classList.add('open');
             document.getElementById('entrySheet').classList.add('open');
 
-            setTimeout(() => {
-                document.getElementById('entryText').focus();
-            }, 120);
+            setTimeout(() => document.getElementById('entryText').focus(), 120);
         }
 
         function closeSheet() {
@@ -885,6 +938,11 @@
             const date = document.getElementById('entryDate').value;
             const note = document.getElementById('entryNote').value.trim();
 
+            let flow = 'expense';
+            if (config.kind === 'mixed') flow = document.getElementById('entryFlow').value;
+            if (config.kind === 'income') flow = 'income';
+            if (config.kind === 'sale') flow = 'sale';
+
             if (!title) {
                 alert('Bitte eine Bezeichnung eintragen.');
                 return;
@@ -900,7 +958,7 @@
                 return;
             }
 
-            if (config.amountRequired && amount === null) {
+            if (config.kind !== 'sale' && amount === null) {
                 alert('Bitte einen Betrag eingeben.');
                 return;
             }
@@ -912,6 +970,7 @@
                 amount,
                 date,
                 note,
+                flow,
                 completed: false,
                 createdAt: new Date().toISOString()
             });
@@ -937,38 +996,66 @@
             renderEverything();
         }
 
+        function applyFilter(entries, filter) {
+            if (filter === 'pending') return entries.filter(e => !e.completed);
+            if (filter === 'completed') return entries.filter(e => e.completed);
+            return entries;
+        }
+
+        function getFlowLabel(entry) {
+            if (entry.flow === 'expense') return 'Belastung';
+            if (entry.flow === 'credit') return 'Gutschrift';
+            if (entry.flow === 'income') return 'Einnahme';
+            if (entry.flow === 'sale') return 'Verkauf';
+            return '';
+        }
+
+        function getAmountClass(entry) {
+            if (entry.flow === 'expense') return 'expense';
+            if (entry.flow === 'credit') return 'credit';
+            if (entry.flow === 'income') return 'income';
+            if (entry.flow === 'sale') return 'sale';
+            return 'expense';
+        }
+
         function getAllListEntries() {
             let all = [];
-            for (let i = 1; i <= 5; i++) {
-                const config = TAB_CONFIG[i];
+            for (let i = 1; i <= 4; i++) {
                 getEntries(i).forEach(entry => {
                     all.push({
                         ...entry,
-                        sourceTab: i,
-                        kind: config.kind
+                        sourceTab: i
                     });
                 });
             }
             return sortEntries(all);
         }
 
-        function getOverallTotals() {
+        function getAllTotals() {
             const totals = {
                 expenseOpen: 0,
                 expenseDone: 0,
+                creditOpen: 0,
+                creditDone: 0,
                 incomeOpen: 0,
                 incomeDone: 0
             };
 
             for (let i = 1; i <= 4; i++) {
-                const config = TAB_CONFIG[i];
                 getEntries(i).forEach(entry => {
                     if (entry.amount == null) return;
-                    if (config.kind === 'expense') {
+
+                    if (entry.flow === 'expense') {
                         if (entry.completed) totals.expenseDone += entry.amount;
                         else totals.expenseOpen += entry.amount;
                     }
-                    if (config.kind === 'income') {
+
+                    if (entry.flow === 'credit') {
+                        if (entry.completed) totals.creditDone += entry.amount;
+                        else totals.creditOpen += entry.amount;
+                    }
+
+                    if (entry.flow === 'income') {
                         if (entry.completed) totals.incomeDone += entry.amount;
                         else totals.incomeOpen += entry.amount;
                     }
@@ -978,7 +1065,103 @@
             return totals;
         }
 
-        function getRegisterTotals(tabIndex) {
+        function getAllMonths() {
+            const map = {};
+
+            for (let i = 1; i <= 4; i++) {
+                getEntries(i).forEach(entry => {
+                    if (entry.amount == null) return;
+
+                    const key = getMonthKey(entry.date);
+                    if (!map[key]) {
+                        map[key] = {
+                            expenseOpen: 0,
+                            expenseDone: 0,
+                            creditOpen: 0,
+                            creditDone: 0,
+                            incomeOpen: 0,
+                            incomeDone: 0
+                        };
+                    }
+
+                    if (entry.flow === 'expense') {
+                        if (entry.completed) map[key].expenseDone += entry.amount;
+                        else map[key].expenseOpen += entry.amount;
+                    }
+
+                    if (entry.flow === 'credit') {
+                        if (entry.completed) map[key].creditDone += entry.amount;
+                        else map[key].creditOpen += entry.amount;
+                    }
+
+                    if (entry.flow === 'income') {
+                        if (entry.completed) map[key].incomeDone += entry.amount;
+                        else map[key].incomeOpen += entry.amount;
+                    }
+                });
+            }
+
+            return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
+        }
+
+        function getMixedRegisterTotals(tabIndex) {
+            const entries = getEntries(tabIndex);
+            const totals = {
+                expenseOpen: 0,
+                expenseDone: 0,
+                creditOpen: 0,
+                creditDone: 0
+            };
+
+            entries.forEach(entry => {
+                if (entry.amount == null) return;
+
+                if (entry.flow === 'expense') {
+                    if (entry.completed) totals.expenseDone += entry.amount;
+                    else totals.expenseOpen += entry.amount;
+                }
+
+                if (entry.flow === 'credit') {
+                    if (entry.completed) totals.creditDone += entry.amount;
+                    else totals.creditOpen += entry.amount;
+                }
+            });
+
+            return totals;
+        }
+
+        function getMixedRegisterMonths(tabIndex) {
+            const entries = getEntries(tabIndex);
+            const map = {};
+
+            entries.forEach(entry => {
+                if (entry.amount == null) return;
+                const key = getMonthKey(entry.date);
+
+                if (!map[key]) {
+                    map[key] = {
+                        expenseOpen: 0,
+                        expenseDone: 0,
+                        creditOpen: 0,
+                        creditDone: 0
+                    };
+                }
+
+                if (entry.flow === 'expense') {
+                    if (entry.completed) map[key].expenseDone += entry.amount;
+                    else map[key].expenseOpen += entry.amount;
+                }
+
+                if (entry.flow === 'credit') {
+                    if (entry.completed) map[key].creditDone += entry.amount;
+                    else map[key].creditOpen += entry.amount;
+                }
+            });
+
+            return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
+        }
+
+        function getSimpleRegisterTotals(tabIndex) {
             const entries = getEntries(tabIndex);
             let open = 0;
             let done = 0;
@@ -992,68 +1175,30 @@
             return { open, done };
         }
 
-        function getRegisterMonths(tabIndex) {
+        function getSimpleRegisterMonths(tabIndex) {
             const entries = getEntries(tabIndex);
             const map = {};
 
             entries.forEach(entry => {
                 if (entry.amount == null) return;
                 const key = getMonthKey(entry.date);
-                if (!map[key]) {
-                    map[key] = { open: 0, done: 0 };
-                }
+
+                if (!map[key]) map[key] = { open: 0, done: 0 };
                 if (entry.completed) map[key].done += entry.amount;
                 else map[key].open += entry.amount;
             });
 
-            return Object.entries(map)
-                .sort((a, b) => b[0].localeCompare(a[0]));
-        }
-
-        function getAllMonths() {
-            const map = {};
-
-            for (let i = 1; i <= 4; i++) {
-                const config = TAB_CONFIG[i];
-                getEntries(i).forEach(entry => {
-                    if (entry.amount == null) return;
-
-                    const key = getMonthKey(entry.date);
-                    if (!map[key]) {
-                        map[key] = {
-                            expenseOpen: 0,
-                            expenseDone: 0,
-                            incomeOpen: 0,
-                            incomeDone: 0
-                        };
-                    }
-
-                    if (config.kind === 'expense') {
-                        if (entry.completed) map[key].expenseDone += entry.amount;
-                        else map[key].expenseOpen += entry.amount;
-                    }
-
-                    if (config.kind === 'income') {
-                        if (entry.completed) map[key].incomeDone += entry.amount;
-                        else map[key].incomeOpen += entry.amount;
-                    }
-                });
-            }
-
-            return Object.entries(map)
-                .sort((a, b) => b[0].localeCompare(a[0]));
-        }
-
-        function applyFilter(entries, filter) {
-            if (filter === 'pending') return entries.filter(e => !e.completed);
-            if (filter === 'completed') return entries.filter(e => e.completed);
-            return entries;
+            return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
         }
 
         function renderItem(entry, tabIndexForActions, sourceName = '') {
             const amountHtml = entry.amount != null
-                ? `<div class="term-amount ${getAmountClass(entry.kind || TAB_CONFIG[tabIndexForActions].kind)}">${formatEuro(entry.amount)}</div>`
+                ? `<div class="term-amount ${getAmountClass(entry)}">${formatEuro(entry.amount)}</div>`
                 : `<div class="term-amount sale">ohne Betrag</div>`;
+
+            const flowBadge = entry.flow
+                ? `<div class="badge ${getAmountClass(entry)}">${getFlowLabel(entry)}</div>`
+                : '';
 
             return `
                 <div class="term-item ${entry.completed ? 'completed' : ''} ${isOverdue(entry.date, entry.completed) ? 'overdue' : ''}">
@@ -1076,8 +1221,9 @@
 
                         ${entry.note ? `<div class="term-note">${escapeHtml(entry.note)}</div>` : ''}
 
-                        <div class="badge ${entry.completed ? 'done' : 'open'}">
-                            ${entry.completed ? 'Erledigt' : 'Offen'}
+                        <div>
+                            <span class="badge ${entry.completed ? 'done' : 'open'}">${entry.completed ? 'Erledigt' : 'Offen'}</span>
+                            ${flowBadge}
                         </div>
 
                         ${sourceName ? `<div class="term-source">📂 ${escapeHtml(sourceName)}</div>` : ''}
@@ -1087,37 +1233,9 @@
             `;
         }
 
-        function renderRegisterSummary(tabIndex) {
-            const container = document.getElementById(`summary${tabIndex}`);
-            const totals = getRegisterTotals(tabIndex);
-            const kind = TAB_CONFIG[tabIndex].kind;
-            const kindClass = kind === 'income' ? 'income' : (kind === 'sale' ? 'neutral' : 'expense');
-            const amountClass = kind === 'income' ? 'income' : (kind === 'sale' ? 'sale' : 'expense');
-
-            const note = tabIndex === 5
-                ? 'Nur Einträge mit Betrag werden summiert.'
-                : 'Summen enthalten offene und erledigte Posten.';
-
-            container.innerHTML = `
-                <div class="summary-card ${kindClass}">
-                    <div class="summary-label">Summe offen</div>
-                    <div class="summary-value ${amountClass}">${formatEuro(totals.open)}</div>
-                    <div class="summary-sub">${note}</div>
-                </div>
-                <div class="summary-card ${kindClass}">
-                    <div class="summary-label">Summe erledigt</div>
-                    <div class="summary-value ${amountClass}">${formatEuro(totals.done)}</div>
-                    <div class="summary-sub">Erledigte Einträge bleiben unten sichtbar.</div>
-                </div>
-            `;
-        }
-
         function renderAllSummary() {
+            const totals = getAllTotals();
             const container = document.getElementById('summary0');
-            const totals = getOverallTotals();
-
-            const saldoOpen = totals.incomeOpen - totals.expenseOpen;
-            const saldoDone = totals.incomeDone - totals.expenseDone;
 
             container.innerHTML = `
                 <div class="summary-card expense">
@@ -1128,40 +1246,49 @@
                     <div class="summary-label">Ausgaben erledigt</div>
                     <div class="summary-value expense">${formatEuro(totals.expenseDone)}</div>
                 </div>
+                <div class="summary-card credit">
+                    <div class="summary-label">Gutschriften offen</div>
+                    <div class="summary-value credit">${formatEuro(totals.creditOpen)}</div>
+                </div>
+                <div class="summary-card credit">
+                    <div class="summary-label">Gutschriften erledigt</div>
+                    <div class="summary-value credit">${formatEuro(totals.creditDone)}</div>
+                </div>
                 <div class="summary-card income">
                     <div class="summary-label">Einnahmen offen</div>
                     <div class="summary-value income">${formatEuro(totals.incomeOpen)}</div>
-                    <div class="summary-sub">Ohne „Offene Verkäufe“</div>
+                    <div class="summary-sub">Nur Außenstände</div>
                 </div>
                 <div class="summary-card income">
                     <div class="summary-label">Einnahmen erledigt</div>
                     <div class="summary-value income">${formatEuro(totals.incomeDone)}</div>
-                    <div class="summary-sub">Ohne „Offene Verkäufe“</div>
-                </div>
-                <div class="summary-card neutral">
-                    <div class="summary-label">Saldo offen</div>
-                    <div class="summary-value ${saldoOpen >= 0 ? 'income' : 'expense'}">${formatEuro(saldoOpen)}</div>
-                </div>
-                <div class="summary-card neutral">
-                    <div class="summary-label">Saldo erledigt</div>
-                    <div class="summary-value ${saldoDone >= 0 ? 'income' : 'expense'}">${formatEuro(saldoDone)}</div>
+                    <div class="summary-sub">Nur Außenstände</div>
                 </div>
             `;
         }
 
-        function renderRegisterList(tabIndex) {
-            const container = document.getElementById(`termsList${tabIndex}`);
-            let entries = sortEntries(getEntries(tabIndex));
-            entries = applyFilter(entries, filters[tabIndex]);
+        function renderAllMonths() {
+            const container = document.getElementById('monthCards0');
+            const months = getAllMonths();
 
-            if (!entries.length) {
-                container.innerHTML = `<div class="terms-empty">Keine Einträge</div>`;
+            if (!months.length) {
+                container.innerHTML = `<div class="month-empty">Noch keine Monatssummen vorhanden.</div>`;
                 return;
             }
 
-            container.innerHTML = entries
-                .map(entry => renderItem(entry, tabIndex))
-                .join('');
+            container.innerHTML = months.map(([monthKey, values]) => `
+                <div class="month-card">
+                    <div class="month-label">${formatMonthKey(monthKey)}</div>
+                    <div class="month-grid">
+                        <div class="month-row"><span>Ausgaben offen</span><strong class="month-value expense">${formatEuro(values.expenseOpen)}</strong></div>
+                        <div class="month-row"><span>Ausgaben erledigt</span><strong class="month-value expense">${formatEuro(values.expenseDone)}</strong></div>
+                        <div class="month-row"><span>Gutschriften offen</span><strong class="month-value credit">${formatEuro(values.creditOpen)}</strong></div>
+                        <div class="month-row"><span>Gutschriften erledigt</span><strong class="month-value credit">${formatEuro(values.creditDone)}</strong></div>
+                        <div class="month-row"><span>Einnahmen offen</span><strong class="month-value income">${formatEuro(values.incomeOpen)}</strong></div>
+                        <div class="month-row"><span>Einnahmen erledigt</span><strong class="month-value income">${formatEuro(values.incomeDone)}</strong></div>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function renderAllList() {
@@ -1174,16 +1301,38 @@
                 return;
             }
 
-            container.innerHTML = entries
-                .map(entry => renderItem(entry, entry.sourceTab, TAB_CONFIG[entry.sourceTab].name))
-                .join('');
+            container.innerHTML = entries.map(entry =>
+                renderItem(entry, entry.sourceTab, TAB_CONFIG[entry.sourceTab].name)
+            ).join('');
         }
 
-        function renderRegisterMonths(tabIndex) {
+        function renderMixedSummary(tabIndex) {
+            const totals = getMixedRegisterTotals(tabIndex);
+            const container = document.getElementById(`summary${tabIndex}`);
+
+            container.innerHTML = `
+                <div class="summary-card expense">
+                    <div class="summary-label">Belastung offen</div>
+                    <div class="summary-value expense">${formatEuro(totals.expenseOpen)}</div>
+                </div>
+                <div class="summary-card expense">
+                    <div class="summary-label">Belastung erledigt</div>
+                    <div class="summary-value expense">${formatEuro(totals.expenseDone)}</div>
+                </div>
+                <div class="summary-card credit">
+                    <div class="summary-label">Gutschrift offen</div>
+                    <div class="summary-value credit">${formatEuro(totals.creditOpen)}</div>
+                </div>
+                <div class="summary-card credit">
+                    <div class="summary-label">Gutschrift erledigt</div>
+                    <div class="summary-value credit">${formatEuro(totals.creditDone)}</div>
+                </div>
+            `;
+        }
+
+        function renderMixedMonths(tabIndex) {
             const container = document.getElementById(`monthCards${tabIndex}`);
-            const months = getRegisterMonths(tabIndex);
-            const kind = TAB_CONFIG[tabIndex].kind;
-            const amountClass = kind === 'income' ? 'income' : (kind === 'sale' ? 'sale' : 'expense');
+            const months = getMixedRegisterMonths(tabIndex);
 
             if (!months.length) {
                 container.innerHTML = `<div class="month-empty">Noch keine Monatssummen vorhanden.</div>`;
@@ -1194,82 +1343,92 @@
                 <div class="month-card">
                     <div class="month-label">${formatMonthKey(monthKey)}</div>
                     <div class="month-grid">
-                        <div class="month-row">
-                            <span>Offen</span>
-                            <strong class="month-value ${amountClass}">${formatEuro(values.open)}</strong>
-                        </div>
-                        <div class="month-row">
-                            <span>Erledigt</span>
-                            <strong class="month-value ${amountClass}">${formatEuro(values.done)}</strong>
-                        </div>
+                        <div class="month-row"><span>Belastung offen</span><strong class="month-value expense">${formatEuro(values.expenseOpen)}</strong></div>
+                        <div class="month-row"><span>Belastung erledigt</span><strong class="month-value expense">${formatEuro(values.expenseDone)}</strong></div>
+                        <div class="month-row"><span>Gutschrift offen</span><strong class="month-value credit">${formatEuro(values.creditOpen)}</strong></div>
+                        <div class="month-row"><span>Gutschrift erledigt</span><strong class="month-value credit">${formatEuro(values.creditDone)}</strong></div>
                     </div>
                 </div>
             `).join('');
         }
 
-        function renderAllMonths() {
-            const container = document.getElementById('monthCards0');
-            const months = getAllMonths();
+        function renderSimpleSummary(tabIndex) {
+            const totals = getSimpleRegisterTotals(tabIndex);
+            const container = document.getElementById(`summary${tabIndex}`);
+            const kind = TAB_CONFIG[tabIndex].kind;
+            const cardClass = kind === 'income' ? 'income' : 'sale';
+            const valueClass = kind === 'income' ? 'income' : 'sale';
+            const note = kind === 'sale'
+                ? 'Nur Einträge mit Betrag werden summiert.'
+                : 'Summen enthalten offene und erledigte Posten.';
+
+            container.innerHTML = `
+                <div class="summary-card ${cardClass}">
+                    <div class="summary-label">Summe offen</div>
+                    <div class="summary-value ${valueClass}">${formatEuro(totals.open)}</div>
+                    <div class="summary-sub">${note}</div>
+                </div>
+                <div class="summary-card ${cardClass}">
+                    <div class="summary-label">Summe erledigt</div>
+                    <div class="summary-value ${valueClass}">${formatEuro(totals.done)}</div>
+                    <div class="summary-sub">Erledigte Einträge bleiben unten sichtbar.</div>
+                </div>
+            `;
+        }
+
+        function renderSimpleMonths(tabIndex) {
+            const container = document.getElementById(`monthCards${tabIndex}`);
+            const months = getSimpleRegisterMonths(tabIndex);
+            const valueClass = TAB_CONFIG[tabIndex].kind === 'income' ? 'income' : 'sale';
 
             if (!months.length) {
                 container.innerHTML = `<div class="month-empty">Noch keine Monatssummen vorhanden.</div>`;
                 return;
             }
 
-            container.innerHTML = months.map(([monthKey, values]) => {
-                const saldoOpen = values.incomeOpen - values.expenseOpen;
-                const saldoDone = values.incomeDone - values.expenseDone;
-
-                return `
-                    <div class="month-card">
-                        <div class="month-label">${formatMonthKey(monthKey)}</div>
-                        <div class="month-grid">
-                            <div class="month-row">
-                                <span>Ausgaben offen</span>
-                                <strong class="month-value expense">${formatEuro(values.expenseOpen)}</strong>
-                            </div>
-                            <div class="month-row">
-                                <span>Ausgaben erledigt</span>
-                                <strong class="month-value expense">${formatEuro(values.expenseDone)}</strong>
-                            </div>
-                            <div class="month-row">
-                                <span>Einnahmen offen</span>
-                                <strong class="month-value income">${formatEuro(values.incomeOpen)}</strong>
-                            </div>
-                            <div class="month-row">
-                                <span>Einnahmen erledigt</span>
-                                <strong class="month-value income">${formatEuro(values.incomeDone)}</strong>
-                            </div>
-                            <div class="month-row">
-                                <span>Saldo offen</span>
-                                <strong class="month-value ${saldoOpen >= 0 ? 'income' : 'expense'}">${formatEuro(saldoOpen)}</strong>
-                            </div>
-                            <div class="month-row">
-                                <span>Saldo erledigt</span>
-                                <strong class="month-value ${saldoDone >= 0 ? 'income' : 'expense'}">${formatEuro(saldoDone)}</strong>
-                            </div>
-                        </div>
+            container.innerHTML = months.map(([monthKey, values]) => `
+                <div class="month-card">
+                    <div class="month-label">${formatMonthKey(monthKey)}</div>
+                    <div class="month-grid">
+                        <div class="month-row"><span>Offen</span><strong class="month-value ${valueClass}">${formatEuro(values.open)}</strong></div>
+                        <div class="month-row"><span>Erledigt</span><strong class="month-value ${valueClass}">${formatEuro(values.done)}</strong></div>
                     </div>
-                `;
-            }).join('');
+                </div>
+            `).join('');
+        }
+
+        function renderRegisterList(tabIndex) {
+            const container = document.getElementById(`termsList${tabIndex}`);
+            let entries = sortEntries(getEntries(tabIndex));
+            entries = applyFilter(entries, filters[tabIndex]);
+
+            if (!entries.length) {
+                container.innerHTML = `<div class="terms-empty">Keine Einträge</div>`;
+                return;
+            }
+
+            container.innerHTML = entries.map(entry => renderItem(entry, tabIndex)).join('');
         }
 
         function renderEverything() {
             renderAllSummary();
-            renderAllList();
             renderAllMonths();
+            renderAllList();
 
             for (let i = 1; i <= 5; i++) {
-                renderRegisterSummary(i);
+                if (TAB_CONFIG[i].kind === 'mixed') {
+                    renderMixedSummary(i);
+                    renderMixedMonths(i);
+                } else {
+                    renderSimpleSummary(i);
+                    renderSimpleMonths(i);
+                }
                 renderRegisterList(i);
-                renderRegisterMonths(i);
             }
         }
 
         function exportToPDF() {
-            const totals = getOverallTotals();
-            const saldoOpen = totals.incomeOpen - totals.expenseOpen;
-            const saldoDone = totals.incomeDone - totals.expenseDone;
+            const allTotals = getAllTotals();
 
             let html = `
                 <div style="font-family: Arial, sans-serif; max-width: 850px; margin: 0 auto;">
@@ -1282,28 +1441,43 @@
                             <th style="padding:10px; border:1px solid #ddd; text-align:left;">Bereich</th>
                             <th style="padding:10px; border:1px solid #ddd; text-align:right;">Betrag</th>
                         </tr>
-                        <tr><td style="padding:10px; border:1px solid #ddd;">Ausgaben offen</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">${formatEuro(totals.expenseOpen)}</td></tr>
-                        <tr><td style="padding:10px; border:1px solid #ddd;">Ausgaben erledigt</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">${formatEuro(totals.expenseDone)}</td></tr>
-                        <tr><td style="padding:10px; border:1px solid #ddd;">Einnahmen offen (ohne Offene Verkäufe)</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">${formatEuro(totals.incomeOpen)}</td></tr>
-                        <tr><td style="padding:10px; border:1px solid #ddd;">Einnahmen erledigt (ohne Offene Verkäufe)</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">${formatEuro(totals.incomeDone)}</td></tr>
-                        <tr><td style="padding:10px; border:1px solid #ddd;"><strong>Saldo offen</strong></td><td style="padding:10px; border:1px solid #ddd; text-align:right;"><strong>${formatEuro(saldoOpen)}</strong></td></tr>
-                        <tr><td style="padding:10px; border:1px solid #ddd;"><strong>Saldo erledigt</strong></td><td style="padding:10px; border:1px solid #ddd; text-align:right;"><strong>${formatEuro(saldoDone)}</strong></td></tr>
+                        <tr><td style="padding:10px; border:1px solid #ddd;">Ausgaben offen</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">${formatEuro(allTotals.expenseOpen)}</td></tr>
+                        <tr><td style="padding:10px; border:1px solid #ddd;">Ausgaben erledigt</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">${formatEuro(allTotals.expenseDone)}</td></tr>
+                        <tr><td style="padding:10px; border:1px solid #ddd;">Gutschriften offen</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">${formatEuro(allTotals.creditOpen)}</td></tr>
+                        <tr><td style="padding:10px; border:1px solid #ddd;">Gutschriften erledigt</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">${formatEuro(allTotals.creditDone)}</td></tr>
+                        <tr><td style="padding:10px; border:1px solid #ddd;">Einnahmen offen</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">${formatEuro(allTotals.incomeOpen)}</td></tr>
+                        <tr><td style="padding:10px; border:1px solid #ddd;">Einnahmen erledigt</td><td style="padding:10px; border:1px solid #ddd; text-align:right;">${formatEuro(allTotals.incomeDone)}</td></tr>
                     </table>
             `;
 
             for (let i = 1; i <= 5; i++) {
                 const config = TAB_CONFIG[i];
-                const totalsRegister = getRegisterTotals(i);
                 const entries = sortEntries(getEntries(i));
 
                 html += `
                     <h2 style="color:#910c93; border-bottom:2px solid #910c93; padding-bottom:8px; margin-top:26px;">${config.name}</h2>
-                    <p style="margin:8px 0 14px; color:#444;">
-                        <strong>Offen:</strong> ${formatEuro(totalsRegister.open)} &nbsp;&nbsp; | &nbsp;&nbsp;
-                        <strong>Erledigt:</strong> ${formatEuro(totalsRegister.done)}
-                        ${i === 5 ? '<br><small>Nur Einträge mit Betrag werden summiert. Nicht in Gesamteinnahmen enthalten.</small>' : ''}
-                    </p>
                 `;
+
+                if (config.kind === 'mixed') {
+                    const totals = getMixedRegisterTotals(i);
+                    html += `
+                        <p style="margin:8px 0 14px; color:#444;">
+                            <strong>Belastung offen:</strong> ${formatEuro(totals.expenseOpen)} &nbsp; | &nbsp;
+                            <strong>Belastung erledigt:</strong> ${formatEuro(totals.expenseDone)}<br>
+                            <strong>Gutschrift offen:</strong> ${formatEuro(totals.creditOpen)} &nbsp; | &nbsp;
+                            <strong>Gutschrift erledigt:</strong> ${formatEuro(totals.creditDone)}
+                        </p>
+                    `;
+                } else {
+                    const totals = getSimpleRegisterTotals(i);
+                    html += `
+                        <p style="margin:8px 0 14px; color:#444;">
+                            <strong>Offen:</strong> ${formatEuro(totals.open)} &nbsp; | &nbsp;
+                            <strong>Erledigt:</strong> ${formatEuro(totals.done)}
+                            ${i === 5 ? '<br><small>Nur Einträge mit Betrag werden summiert. Register ist nicht in der Gesamtübersicht enthalten.</small>' : ''}
+                        </p>
+                    `;
+                }
 
                 if (!entries.length) {
                     html += `<p style="color:#777;">Keine Einträge vorhanden.</p>`;
@@ -1314,6 +1488,7 @@
                     <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
                         <tr style="background:#f5f5f5;">
                             <th style="padding:10px; border:1px solid #ddd; text-align:left;">Status</th>
+                            <th style="padding:10px; border:1px solid #ddd; text-align:left;">Art</th>
                             <th style="padding:10px; border:1px solid #ddd; text-align:left;">Fällig</th>
                             <th style="padding:10px; border:1px solid #ddd; text-align:left;">Bezeichnung</th>
                             <th style="padding:10px; border:1px solid #ddd; text-align:right;">Betrag</th>
@@ -1325,6 +1500,7 @@
                     html += `
                         <tr>
                             <td style="padding:10px; border:1px solid #ddd;">${entry.completed ? 'Erledigt' : 'Offen'}</td>
+                            <td style="padding:10px; border:1px solid #ddd;">${getFlowLabel(entry)}</td>
                             <td style="padding:10px; border:1px solid #ddd;">${formatDate(entry.date)}</td>
                             <td style="padding:10px; border:1px solid #ddd;">${escapeHtml(entry.title)}</td>
                             <td style="padding:10px; border:1px solid #ddd; text-align:right;">${entry.amount != null ? formatEuro(entry.amount) : '—'}</td>
