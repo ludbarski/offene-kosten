@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Schnell-Termine</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --primary: #910c93;
+            --primary-dark: #730a74;
+            --bg-card: rgba(255, 255, 255, 0.96);
+            --text: #222;
+            --muted: #666;
+            --border: #e8e8e8;
+            --danger: #d84f4f;
+            --success: #4caf50;
+            --info: #3b82f6;
+            --warning: #f44336;
+            --shadow: 0 12px 36px rgba(0,0,0,0.22);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text);
+            background: #000;
+        }
+
+        body {
+            background-image: url('hintergrund.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            padding:
+                calc(env(safe-area-inset-top) + 10px)
+                10px
+                calc(env(safe-area-inset-bottom) + 90px);
+        }
+
+        .app {
+            max-width: 560px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border-radius: 26px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .header {
+            background: var(--primary);
+            color: #fff;
+            padding: 18px 16px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .header h1 {
+            margin: 0 0 4px;
+            font-size: 1.5rem;
+            line-height: 1.15;
+        }
+
+        .header p {
+            margin: 0;
+            font-size: 0.98rem;
+            opacity: 0.95;
+        }
+
+        .btn-export {
+            border: 1px solid rgba(255,255,255,0.35);
+            background: rgba(255,255,255,0.16);
+            color: #fff;
+            border-radius: 14px;
+            padding: 12px 14px;
+            min-height: 46px;
+            font-size: 0.96rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 12px 12px 10px;
+            background: #faf7fb;
+            border-bottom: 1px solid var(--border);
+            scrollbar-width: none;
+        }
+
+        .tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-btn {
+            border: none;
+            border-radius: 16px;
+            background: #efe8f0;
+            color: #555;
+            padding: 13px 16px;
+            min-height: 50px;
+            font-size: 0.98rem;
+            font-weight: 800;
+            cursor: pointer;
+            white-space: nowrap;
+            flex: 0 0 auto;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .panel-hint {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            background: #f8f8f8;
+            font-size: 0.98rem;
+            line-height: 1.45;
+            color: #6e6e6e;
+            text-align: center;
+        }
+
+        .tool-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 12px 14px;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tool-btn {
+            border: none;
+            border-radius: 14px;
+            min-height: 48px;
+            padding: 10px 12px;
+            font-size: 0.98rem;
+            font-weight: 800;
+            cursor: pointer;
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .tool-btn.secondary {
+            background: #efe8f0;
+            color: #5d4561;
+        }
+
+        .tool-note {
+            padding: 0 14px 12px;
+            background: #fff;
+            color: #8b8b8b;
+            font-size: 0.83rem;
+            line-height: 1.35;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .filter-btns {
+            display: flex;
+            gap: 8px;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            background: #fff;
+        }
+
+        .filter-btn {
+            flex: 1;
+            border: 1px solid #ddd;
+            background: #fff;
+            color: #444;
+            border-radius: 14px;
+            min-height: 48px;
+            padding: 10px 12px;
+            font-size: 0.98rem;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .terms-section {
+            padding: 14px;
+            min-height: 280px;
+        }
+
+        .terms-empty {
+            padding: 38px 16px;
+            text-align: center;
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .term-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            background: #f8f8f9;
+            border-left: 5px solid var(--primary);
+            border-radius: 18px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .term-item.completed {
+            background: #f1f7f2;
+            border-left-color: var(--success);
+            opacity: 0.86;
+        }
+
+        .term-item.completed .term-title {
+            text-decoration: line-through;
+            color: #8d8d8d;
+        }
+
+        .term-item.overdue {
+            background: #fff0f0;
+            border-left-color: var(--warning);
+        }
+
+        .term-checkbox {
+            width: 24px;
+            height: 24px;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .term-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .term-title {
+            font-size: 1.08rem;
+            font-weight: 800;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+
+        .term-meta {
+            margin-top: 6px;
+            font-size: 0.96rem;
+            color: var(--muted);
+            line-height: 1.4;
+        }
+
+        .term-note {
+            margin-top: 8px;
+            font-size: 0.96rem;
+            color: #707070;
+            line-height: 1.45;
+            word-break: break-word;
+        }
+
+        .term-source {
+            margin-top: 8px;
+            font-size: 0.88rem;
+            color: #8b8b8b;
+            font-weight: 700;
+        }
+
+        .badge {
+            display: inline-block;
+            margin-top: 8px;
+            margin-right: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        .badge.done {
+            background: #e6f5ea;
+            color: #2e7d32;
+        }
+
+        .badge.open {
+            background: #f8eefe;
+            color: var(--primary);
+        }
+
+        .term-actions {
+            display: grid;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .term-action-btn {
+            border: none;
+            border-radius: 12px;
+            min-width: 44px;
+            min-height: 40px;
+            padding: 8px 10px;
+            font-size: 0.88rem;
+            font-weight: 800;
+            cursor: pointer;
+            color: #fff;
+        }
+
+        .btn-edit {
+            background: var(--info);
+        }
+
+        .btn-copy {
+            background: var(--primary);
+        }
+
+        .btn-delete {
+            background: var(--danger);
+        }
+
+        .fab {
+            position: fixed;
+            right: 18px;
+            bottom: calc(env(safe-area-inset-bottom) + 18px);
+            width: 62px;
+            height: 62px;
+            border: none;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            font-size: 2rem;
+            line-height: 1;
+            box-shadow: 0 10px 26px rgba(145, 12, 147, 0.35);
+            cursor: pointer;
+            z-index: 40;
+        }
+
+        .fab.hidden {
+            display: none;
+        }
+
+        .sheet-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: none;
+            z-index: 90;
+        }
+
+        .sheet-backdrop.open {
+            display: block;
+        }
+
+        .sheet {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #fff;
+            border-radius: 24px 24px 0 0;
+            padding:
+                14px
+                16px
+                calc(env(safe-area-inset-bottom) + 18px);
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
+            transform: translateY(100%);
+            transition: transform 0.22s ease;
+            z-index: 100;
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        .sheet.open {
+            transform: translateY(0);
+        }
+
+        .sheet-handle {
+            width: 46px;
+            height: 5px;
+            border-radius: 999px;
+            background: #ddd;
+            margin: 0 auto 14px;
+        }
+
+        .sheet h2 {
+            margin: 0 0 14px;
+            font-size: 1.24rem;
+            color: var(--primary);
+        }
+
+        .sheet-hint {
+            margin: -4px 0 12px;
+            font-size: 0.88rem;
+            color: #777;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.98rem;
+            font-weight: 800;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            border: 1px solid #d8d8d8;
+            border-radius: 16px;
+            padding: 14px 15px;
+            font-size: 1.03rem;
+            line-height: 1.35;
+            font-family: inherit;
+            background: #fff;
+        }
+
+        .form-group textarea {
+            min-height: 92px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(145, 12, 147, 0.12);
+        }
+
+        .sheet-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .btn-secondary,
+        .btn-primary {
+            flex: 1;
+            border: none;
+            min-height: 52px;
+            border-radius: 16px;
+            font-size: 1.02rem;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .btn-secondary {
+            background: #efefef;
+            color: #333;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (min-width: 430px) {
+            .header h1 { font-size: 1.65rem; }
+            .term-title { font-size: 1.1rem; }
+            .term-meta, .term-note { font-size: 0.98rem; }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-card: rgba(20, 17, 24, 0.96);
+                --text: #f4eef8;
+                --muted: #b8aac6;
+                --border: #3a2f43;
+                --shadow: 0 12px 36px rgba(0,0,0,0.45);
+            }
+
+            body {
+                background-color: #09070c;
+            }
+
+            .app,
+            .sheet {
+                background: rgba(20, 17, 24, 0.96);
+                color: var(--text);
+            }
+
+            .tabs {
+                background: #17131b;
+                border-bottom-color: var(--border);
+            }
+
+            .tab-btn {
+                background: #241d2a;
+                color: #ddd2e7;
+            }
+
+            .tab-btn.active {
+                background: var(--primary);
+                color: #fff;
+            }
+
+            .panel-hint,
+            .tool-row,
+            .tool-note,
+            .filter-btns {
+                background: #141118;
+                border-color: var(--border);
+            }
+
+            .tool-btn.secondary {
+                background: #2b2431;
+                color: #eadff3;
+            }
+
+            .filter-btn {
+                background: #221c28;
+                color: #ece3f3;
+                border-color: #4a3a55;
+            }
+
+            .filter-btn.active {
+                background: var(--primary);
+                color: #fff;
+                border-color: var(--primary);
+            }
+
+            .term-item {
+                background: #1b1620;
+                color: var(--text);
+            }
+
+            .term-item.completed {
+                background: #1a241d;
+                border-left-color: #4caf50;
+            }
+
+            .term-item.completed .term-title {
+                color: #9ea79f;
+            }
+
+            .term-item.overdue {
+                background: #2a1818;
+                border-left-color: #f44336;
+            }
+
+            .terms-empty,
+            .term-meta,
+            .term-note,
+            .term-source,
+            .sheet-hint,
+            .tool-note {
+                color: #b8aac6;
+            }
+
+            .form-group label {
+                color: #ddd1e8;
+            }
+
+            .form-group input,
+            .form-group textarea {
+                background: #17121c;
+                color: #f4eef8;
+                border-color: #473750;
+            }
+
+            .form-group input::placeholder,
+            .form-group textarea::placeholder {
+                color: #8f7fa1;
+            }
+
+            .btn-secondary {
+                background: #2a2430;
+                color: #f1e9f6;
+            }
+
+            .badge.open {
+                background: #382245;
+                color: #eadbf3;
+            }
+
+            .badge.done {
+                background: #1f3a28;
+                color: #bde8ca;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div class="header-row">
+                <div>
+                    <h1>📅 Schnell-Termine</h1>
+                    <p>Schnell erfassen, nicht vergessen</p>
+                </div>
+                <button class="btn-export" onclick="exportToPDF()">PDF</button>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab(0, this)">Alle</button>
+            <button class="tab-btn" onclick="switchTab(1, this)">Micha</button>
+            <button class="tab-btn" onclick="switchTab(2, this)">Vatta</button>
+            <button class="tab-btn" onclick="switchTab(3, this)">Thekla</button>
+            <button class="tab-btn" onclick="switchTab(4, this)">Sonstiges</button>
+        </div>
+
+        <div class="tab-content active" data-tab="0">
+            <div class="panel-hint">
+                Übersicht aller Termine. Neue Einträge bitte in Micha, Vatta, Thekla oder Sonstiges anlegen.
+            </div>
+
+            <div class="tool-row">
+                <button class="tool-btn" onclick="exportBackup()">Backup sichern</button>
+                <button class="tool-btn secondary" onclick="triggerBackupImport()">Backup laden</button>
+            </div>
+            <div class="tool-note">
+                „Backup laden“ überschreibt den aktuellen Datenstand. Auf dem iPhone öffnet sich beim Export möglichst das Teilen-Menü.
+            </div>
+
+            <div class="filter-btns">
+                <button class="filter-btn active" onclick="setFilter(0, 'all', this)">Alle</button>
+                <button class="filter-btn" onclick="setFilter(0, 'pending', this)">Offen</button>
+                <button class="filter-btn" onclick="setFilter(0, 'completed', this)">Erledigt</button>
+            </div>
+            <div class="terms-section" id="termsList0"></div>
+        </div>
+
+        <div class="tab-content" data-tab="1">
+            <div class="filter-btns">
+                <button class="filter-btn active" onclick="setFilter(1, 'all', this)">Alle</button>
+                <button class="filter-btn" onclick="setFilter(1, 'pending', this)">Offen</button>
+                <button class="filter-btn" onclick="setFilter(1, 'completed', this)">Erledigt</button>
+            </div>
+            <div class="terms-section" id="termsList1"></div>
+        </div>
+
+        <div class="tab-content" data-tab="2">
+            <div class="filter-btns">
+                <button class="filter-btn active" onclick="setFilter(2, 'all', this)">Alle</button>
+                <button class="filter-btn" onclick="setFilter(2, 'pending', this)">Offen</button>
+                <button class="filter-btn" onclick="setFilter(2, 'completed', this)">Erledigt</button>
+            </div>
+            <div class="terms-section" id="termsList2"></div>
+        </div>
+
+        <div class="tab-content" data-tab="3">
+            <div class="filter-btns">
+                <button class="filter-btn active" onclick="setFilter(3, 'all', this)">Alle</button>
+                <button class="filter-btn" onclick="setFilter(3, 'pending', this)">Offen</button>
+                <button class="filter-btn" onclick="setFilter(3, 'completed', this)">Erledigt</button>
+            </div>
+            <div class="terms-section" id="termsList3"></div>
+        </div>
+
+        <div class="tab-content" data-tab="4">
+            <div class="filter-btns">
+                <button class="filter-btn active" onclick="setFilter(4, 'all', this)">Alle</button>
+                <button class="filter-btn" onclick="setFilter(4, 'pending', this)">Offen</button>
+                <button class="filter-btn" onclick="setFilter(4, 'completed', this)">Erledigt</button>
+            </div>
+            <div class="terms-section" id="termsList4"></div>
+        </div>
+    </div>
+
+    <button class="fab" id="fabBtn" onclick="openCreateSheet()">+</button>
+
+    <input
+        type="file"
+        id="backupFileInput"
+        class="hidden"
+        accept=".json,application/json"
+        onchange="handleBackupImport(event)"
+    />
+
+    <div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
+
+    <div class="sheet" id="entrySheet">
+        <div class="sheet-handle"></div>
+        <h2 id="sheetTitle">Neuer Termin</h2>
+        <div class="sheet-hint" id="sheetHint"></div>
+
+        <div class="form-group">
+            <label for="entryText">Was?</label>
+            <input type="text" id="entryText" placeholder="z. B. Arzt anrufen" />
+        </div>
+
+        <div class="form-group">
+            <label for="entryDate">Wann?</label>
+            <input type="date" id="entryDate" />
+        </div>
+
+        <div class="form-group">
+            <label for="entryNote">Notiz (optional)</label>
+            <textarea id="entryNote" placeholder="z. B. Telefonnummer, Rückruf, Unterlagen ..."></textarea>
+        </div>
+
+        <div class="sheet-actions">
+            <button class="btn-secondary" onclick="closeSheet()">Abbrechen</button>
+            <button class="btn-primary" id="saveBtn" onclick="saveEntry()">Speichern</button>
+        </div>
+    </div>
+
+    <script>
+        const TAB_CONFIG = [
+            { name: 'Alle' },
+            { name: 'Micha' },
+            { name: 'Vatta' },
+            { name: 'Thekla' },
+            { name: 'Sonstiges' }
+        ];
+
+        const filters = ['all', 'all', 'all', 'all', 'all'];
+        let currentTab = 0;
+        let formMode = 'create'; // create | edit | duplicate
+        let formContext = { tabIndex: null, id: null };
+
+        function todayString() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return String(text || '').replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('de-DE', {
+                weekday: 'short',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+
+        function isOverdue(dateStr, completed) {
+            if (completed) return false;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const d = new Date(dateStr + 'T00:00:00');
+            return d < today;
+        }
+
+        function getEntries(tabIndex) {
+            const data = localStorage.getItem(`terms${tabIndex}`);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveEntries(tabIndex, entries) {
+            localStorage.setItem(`terms${tabIndex}`, JSON.stringify(entries));
+        }
+
+        function sortEntries(entries) {
+            return [...entries].sort((a, b) => {
+                if (a.completed !== b.completed) return Number(a.completed) - Number(b.completed);
+                return new Date(a.date) - new Date(b.date);
+            });
+        }
+
+        function updateFab() {
+            const fab = document.getElementById('fabBtn');
+            if (currentTab === 0) fab.classList.add('hidden');
+            else fab.classList.remove('hidden');
+        }
+
+        function switchTab(tabIndex, btn) {
+            currentTab = tabIndex;
+
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(tab => tab.classList.remove('active'));
+
+            document.querySelector(`[data-tab="${tabIndex}"]`).classList.add('active');
+            btn.classList.add('active');
+
+            updateFab();
+            renderEverything();
+        }
+
+        function setFilter(tabIndex, filter, btn) {
+            filters[tabIndex] = filter;
+            const group = document.querySelector(`[data-tab="${tabIndex}"] .filter-btns`);
+            group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderEverything();
+        }
+
+        function openSheetBase(title, hint) {
+            document.getElementById('sheetTitle').textContent = title;
+            document.getElementById('sheetHint').textContent = hint || '';
+            document.getElementById('sheetBackdrop').classList.add('open');
+            document.getElementById('entrySheet').classList.add('open');
+
+            setTimeout(() => document.getElementById('entryText').focus(), 120);
+        }
+
+        function openCreateSheet() {
+            if (currentTab === 0) return;
+
+            formMode = 'create';
+            formContext = { tabIndex: currentTab, id: null };
+
+            document.getElementById('entryText').value = '';
+            document.getElementById('entryDate').value = todayString();
+            document.getElementById('entryNote').value = '';
+            document.getElementById('saveBtn').textContent = 'Speichern';
+
+            openSheetBase(`Neuer Termin – ${TAB_CONFIG[currentTab].name}`, 'Neuen Termin anlegen.');
+        }
+
+        function openEditSheet(tabIndex, id) {
+            const entries = getEntries(tabIndex);
+            const entry = entries.find(e => e.id === id);
+            if (!entry) return;
+
+            formMode = 'edit';
+            formContext = { tabIndex, id };
+
+            document.getElementById('entryText').value = entry.title || '';
+            document.getElementById('entryDate').value = entry.date || todayString();
+            document.getElementById('entryNote').value = entry.note || '';
+            document.getElementById('saveBtn').textContent = 'Änderungen speichern';
+
+            openSheetBase(`Termin bearbeiten – ${TAB_CONFIG[tabIndex].name}`, 'Eintrag wird aktualisiert.');
+        }
+
+        function openDuplicateSheet(tabIndex, id) {
+            const entries = getEntries(tabIndex);
+            const entry = entries.find(e => e.id === id);
+            if (!entry) return;
+
+            formMode = 'duplicate';
+            formContext = { tabIndex, id: null };
+
+            document.getElementById('entryText').value = entry.title || '';
+            document.getElementById('entryDate').value = entry.date || todayString();
+            document.getElementById('entryNote').value = entry.note || '';
+            document.getElementById('saveBtn').textContent = 'Kopie speichern';
+
+            openSheetBase(`Termin duplizieren – ${TAB_CONFIG[tabIndex].name}`, 'Kopie wird als neuer Eintrag gespeichert.');
+        }
+
+        function closeSheet() {
+            document.getElementById('sheetBackdrop').classList.remove('open');
+            document.getElementById('entrySheet').classList.remove('open');
+        }
+
+        function saveEntry() {
+            const tabIndex = formContext.tabIndex;
+            if (!tabIndex || tabIndex === 0) return;
+
+            const title = document.getElementById('entryText').value.trim();
+            const date = document.getElementById('entryDate').value;
+            const note = document.getElementById('entryNote').value.trim();
+
+            if (!title) {
+                alert('Bitte einen Termin eintragen.');
+                return;
+            }
+
+            if (!date) {
+                alert('Bitte ein Datum eintragen.');
+                return;
+            }
+
+            const entries = getEntries(tabIndex);
+
+            if (formMode === 'edit') {
+                const entry = entries.find(e => e.id === formContext.id);
+                if (!entry) {
+                    alert('Eintrag nicht gefunden.');
+                    return;
+                }
+
+                entry.title = title;
+                entry.date = date;
+                entry.note = note;
+                entry.updatedAt = new Date().toISOString();
+            } else {
+                entries.push({
+                    id: Date.now(),
+                    title,
+                    date,
+                    note,
+                    completed: false,
+                    createdAt: new Date().toISOString()
+                });
+            }
+
+            saveEntries(tabIndex, entries);
+            closeSheet();
+            renderEverything();
+        }
+
+        function toggleCompleted(tabIndex, id) {
+            const entries = getEntries(tabIndex);
+            const entry = entries.find(e => e.id === id);
+            if (!entry) return;
+
+            entry.completed = !entry.completed;
+            saveEntries(tabIndex, entries);
+            renderEverything();
+        }
+
+        function deleteEntry(tabIndex, id) {
+            const ok = confirm('Termin wirklich löschen?');
+            if (!ok) return;
+
+            const entries = getEntries(tabIndex).filter(e => e.id !== id);
+            saveEntries(tabIndex, entries);
+            renderEverything();
+        }
+
+        function applyFilter(entries, filter) {
+            if (filter === 'pending') return entries.filter(e => !e.completed);
+            if (filter === 'completed') return entries.filter(e => e.completed);
+            return entries;
+        }
+
+        function getAllEntries() {
+            let all = [];
+            for (let i = 1; i <= 4; i++) {
+                getEntries(i).forEach(entry => {
+                    all.push({
+                        ...entry,
+                        sourceTab: i
+                    });
+                });
+            }
+            return sortEntries(all);
+        }
+
+        function renderItem(entry, actionTabIndex, sourceName = '') {
+            return `
+                <div class="term-item ${entry.completed ? 'completed' : ''} ${isOverdue(entry.date, entry.completed) ? 'overdue' : ''}">
+                    <input
+                        type="checkbox"
+                        class="term-checkbox"
+                        ${entry.completed ? 'checked' : ''}
+                        onchange="toggleCompleted(${actionTabIndex}, ${entry.id})"
+                    />
+                    <div class="term-content">
+                        <div class="term-title">${escapeHtml(entry.title)}</div>
+                        <div class="term-meta">
+                            ${formatDate(entry.date)}
+                            ${isOverdue(entry.date, entry.completed) ? ' • ⚠️ Überfällig' : ''}
+                        </div>
+
+                        ${entry.note ? `<div class="term-note">${escapeHtml(entry.note)}</div>` : ''}
+
+                        <div>
+                            <span class="badge ${entry.completed ? 'done' : 'open'}">${entry.completed ? 'Erledigt' : 'Offen'}</span>
+                        </div>
+
+                        ${sourceName ? `<div class="term-source">📂 ${escapeHtml(sourceName)}</div>` : ''}
+                    </div>
+
+                    <div class="term-actions">
+                        <button class="term-action-btn btn-edit" onclick="openEditSheet(${actionTabIndex}, ${entry.id})">✏️</button>
+                        <button class="term-action-btn btn-copy" onclick="openDuplicateSheet(${actionTabIndex}, ${entry.id})">⧉</button>
+                        <button class="term-action-btn btn-delete" onclick="deleteEntry(${actionTabIndex}, ${entry.id})">🗑️</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAllList() {
+            const container = document.getElementById('termsList0');
+            let entries = getAllEntries();
+            entries = applyFilter(entries, filters[0]);
+
+            if (!entries.length) {
+                container.innerHTML = `<div class="terms-empty">Keine Termine</div>`;
+                return;
+            }
+
+            container.innerHTML = entries.map(entry =>
+                renderItem(entry, entry.sourceTab, TAB_CONFIG[entry.sourceTab].name)
+            ).join('');
+        }
+
+        function renderRegisterList(tabIndex) {
+            const container = document.getElementById(`termsList${tabIndex}`);
+            let entries = sortEntries(getEntries(tabIndex));
+            entries = applyFilter(entries, filters[tabIndex]);
+
+            if (!entries.length) {
+                container.innerHTML = `<div class="terms-empty">Keine Termine</div>`;
+                return;
+            }
+
+            container.innerHTML = entries.map(entry => renderItem(entry, tabIndex)).join('');
+        }
+
+        function getBackupPayload() {
+            return {
+                app: 'schnell-termine',
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                entries: {
+                    1: getEntries(1),
+                    2: getEntries(2),
+                    3: getEntries(3),
+                    4: getEntries(4)
+                }
+            };
+        }
+
+        function downloadTextFile(content, filename, mimeType = 'application/json') {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        async function exportBackup() {
+            try {
+                const payload = getBackupPayload();
+                const content = JSON.stringify(payload, null, 2);
+                const filename = `schnell-termine-backup-${new Date().toISOString().slice(0,10)}.json`;
+                const file = new File([content], filename, { type: 'application/json' });
+
+                if (navigator.share && navigator.canShare) {
+                    try {
+                        if (navigator.canShare({ files: [file] })) {
+                            await navigator.share({
+                                title: 'Backup Schnell-Termine',
+                                text: 'Backup der App „Schnell-Termine“',
+                                files: [file]
+                            });
+                            return;
+                        }
+                    } catch (err) {
+                        if (err && err.name === 'AbortError') return;
+                    }
+                }
+
+                downloadTextFile(content, filename, 'application/json');
+            } catch (err) {
+                alert('Backup konnte nicht erstellt werden.');
+                console.error(err);
+            }
+        }
+
+        function triggerBackupImport() {
+            const input = document.getElementById('backupFileInput');
+            if (!input) return;
+            input.value = '';
+            input.click();
+        }
+
+        function handleBackupImport(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            const confirmImport = confirm('Backup wirklich laden? Der aktuelle Datenstand wird überschrieben.');
+            if (!confirmImport) {
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const text = e.target.result;
+                    const data = JSON.parse(text);
+
+                    if (!data || data.app !== 'schnell-termine' || !data.entries) {
+                        throw new Error('Ungültiges Backup-Format');
+                    }
+
+                    for (let i = 1; i <= 4; i++) {
+                        const entries = Array.isArray(data.entries[i]) ? data.entries[i] : [];
+                        saveEntries(i, entries);
+                    }
+
+                    renderEverything();
+                    alert('Backup erfolgreich geladen.');
+                } catch (err) {
+                    alert('Backup konnte nicht geladen werden. Datei prüfen.');
+                    console.error(err);
+                } finally {
+                    event.target.value = '';
+                }
+            };
+
+            reader.onerror = function() {
+                alert('Datei konnte nicht gelesen werden.');
+                event.target.value = '';
+            };
+
+            reader.readAsText(file, 'utf-8');
+        }
+
+        function exportToPDF() {
+            const sections = [];
+
+            for (let i = 1; i <= 4; i++) {
+                const entries = sortEntries(getEntries(i)).filter(e => !e.completed);
+                sections.push({
+                    name: TAB_CONFIG[i].name,
+                    entries
+                });
+            }
+
+            const hasAny = sections.some(s => s.entries.length > 0);
+            if (!hasAny) {
+                alert('Keine offenen Termine für den PDF-Export vorhanden.');
+                return;
+            }
+
+            let html = `
+                <style>
+                    @page {
+                        size: A4;
+                        margin: 10mm;
+                    }
+
+                    body {
+                        font-family: Arial, sans-serif;
+                        color: #222;
+                        font-size: 12px;
+                        line-height: 1.35;
+                    }
+
+                    .pdf-wrap {
+                        max-width: 850px;
+                        margin: 0 auto;
+                    }
+
+                    .pdf-title {
+                        text-align: center;
+                        color: #910c93;
+                        margin: 0 0 8px;
+                        font-size: 24px;
+                    }
+
+                    .pdf-subtitle {
+                        text-align: center;
+                        color: #666;
+                        margin: 0 0 20px;
+                        font-size: 12px;
+                    }
+
+                    .pdf-section {
+                        margin-bottom: 18px;
+                    }
+
+                    .pdf-section h2 {
+                        color: #910c93;
+                        border-bottom: 2px solid #910c93;
+                        padding-bottom: 6px;
+                        margin: 0 0 10px;
+                        font-size: 18px;
+                        page-break-after: avoid;
+                    }
+
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 14px;
+                        font-size: 11px;
+                    }
+
+                    thead {
+                        display: table-header-group;
+                    }
+
+                    tr, td, th {
+                        break-inside: avoid;
+                        page-break-inside: avoid;
+                    }
+
+                    th {
+                        background: #f5f5f5;
+                        text-align: left;
+                        font-weight: 700;
+                    }
+
+                    th, td {
+                        border: 1px solid #ddd;
+                        padding: 7px 8px;
+                        vertical-align: top;
+                    }
+
+                    .small {
+                        font-size: 10px;
+                        color: #666;
+                    }
+
+                    .footer {
+                        margin-top: 20px;
+                        padding-top: 12px;
+                        border-top: 1px solid #ddd;
+                        color: #888;
+                        font-size: 11px;
+                    }
+                </style>
+
+                <div class="pdf-wrap">
+                    <h1 class="pdf-title">📅 Schnell-Termine</h1>
+                    <p class="pdf-subtitle">Offene Termine · erstellt am ${new Date().toLocaleDateString('de-DE')}</p>
+            `;
+
+            sections.forEach(section => {
+                html += `
+                    <div class="pdf-section">
+                        <h2>${section.name}</h2>
+                `;
+
+                if (!section.entries.length) {
+                    html += `<p class="small">Keine offenen Termine vorhanden.</p></div>`;
+                    return;
+                }
+
+                html += `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>☐</th>
+                                <th>Datum</th>
+                                <th>Termin</th>
+                                <th>Notiz</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                section.entries.forEach(entry => {
+                    html += `
+                        <tr>
+                            <td>☐</td>
+                            <td>${formatDate(entry.date)}</td>
+                            <td>${escapeHtml(entry.title)}</td>
+                            <td>${entry.note ? escapeHtml(entry.note) : '—'}</td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                        </tbody>
+                    </table>
+                    </div>
+                `;
+            });
+
+            html += `
+                    <div class="footer">
+                        Export aus der App „Schnell-Termine“
+                    </div>
+                </div>
+            `;
+
+            html2pdf().set({
+                margin: [8, 8, 8, 8],
+                filename: `Schnell-Termine-${new Date().toLocaleDateString('de-DE')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: {
+                    scale: 1.5,
+                    useCORS: true
+                },
+                jsPDF: {
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                },
+                pagebreak: {
+                    mode: ['css', 'legacy']
+                }
+            }).from(html).save();
+        }
+
+        function renderEverything() {
+            renderAllList();
+            for (let i = 1; i <= 4; i++) {
+                renderRegisterList(i);
+            }
+        }
+
+        function init() {
+            renderEverything();
+            updateFab();
+        }
+
+        init();
+    </script>
+</body>
+</html>
