@@ -1,28 +1,31 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Offene Kosten</title>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
         :root {
             --primary: #910c93;
             --primary-dark: #730a74;
-            --bg-card: rgba(255, 255, 255, 0.96);
-            --text: #222;
-            --muted: #666;
-            --border: #e8e8e8;
-            --danger: #d84f4f;
+            --bg: rgba(255,255,255,.97);
+            --card: #ffffff;
+            --text: #242124;
+            --muted: #726b73;
+            --border: #e7e2e8;
             --expense: #c0392b;
             --credit: #1f9d55;
             --income: #1f9d55;
             --sale: #8e44ad;
-            --success: #4caf50;
-            --overdue: #f44336;
+            --danger: #d84f4f;
             --info: #3b82f6;
-            --shadow: 0 12px 36px rgba(0,0,0,0.22);
+            --success: #4caf50;
+            --warning: #f44336;
+            --shadow: 0 12px 36px rgba(0,0,0,.24);
         }
 
         * {
@@ -31,602 +34,154 @@
         }
 
         html, body {
-            margin: 0;
-            padding: 0;
             min-height: 100%;
+            margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            color: var(--text);
-            background: #000;
         }
-<style>
-    /* Zentraler Speicher: Anmeldung */
-    #cloudAuthOverlay {
-        position: fixed;
-        inset: 0;
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-        background: rgba(9, 7, 12, 0.78);
-        backdrop-filter: blur(8px);
-    }
-
-    .cloud-auth-box {
-        width: 100%;
-        max-width: 420px;
-        padding: 24px 20px;
-        border-radius: 24px;
-        background: #fff;
-        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
-    .cloud-auth-icon {
-        width: 58px;
-        height: 58px;
-        display: grid;
-        place-items: center;
-        margin: 0 auto 13px;
-        border-radius: 18px;
-        background: #910c93;
-        color: #fff;
-        font-size: 1.8rem;
-    }
-
-    .cloud-auth-box h2 {
-        margin: 0;
-        color: #910c93;
-        text-align: center;
-        font-size: 1.45rem;
-    }
-
-    .cloud-auth-box p {
-        margin: 9px 0 20px;
-        color: #666;
-        text-align: center;
-        line-height: 1.4;
-        font-size: 0.95rem;
-    }
-
-    .cloud-auth-box label {
-        display: block;
-        margin: 12px 0 6px;
-        color: #333;
-        font-size: 0.95rem;
-        font-weight: 800;
-    }
-
-    .cloud-auth-box input {
-        width: 100%;
-        padding: 14px;
-        border: 1px solid #ddd;
-        border-radius: 14px;
-        font-size: 1rem;
-        font-family: inherit;
-    }
-
-    .cloud-auth-box input:focus {
-        outline: none;
-        border-color: #910c93;
-        box-shadow: 0 0 0 4px rgba(145, 12, 147, 0.12);
-    }
-
-    .cloud-auth-primary,
-    .cloud-auth-secondary {
-        width: 100%;
-        min-height: 50px;
-        margin-top: 18px;
-        border: 0;
-        border-radius: 14px;
-        font-size: 1rem;
-        font-weight: 800;
-        cursor: pointer;
-    }
-
-    .cloud-auth-primary {
-        background: #910c93;
-        color: #fff;
-    }
-
-    .cloud-auth-secondary {
-        margin-top: 10px;
-        background: transparent;
-        color: #910c93;
-    }
-
-    #cloudAuthMessage {
-        min-height: 20px;
-        margin-top: 12px;
-        color: #c0392b;
-        text-align: center;
-        font-size: 0.9rem;
-    }
-
-    #cloudSyncBadge {
-        position: fixed;
-        right: 14px;
-        bottom: calc(env(safe-area-inset-bottom) + 92px);
-        z-index: 60;
-        display: none;
-        max-width: 225px;
-        padding: 8px 11px;
-        border: 0;
-        border-radius: 999px;
-        background: rgba(30, 25, 34, 0.9);
-        color: #fff;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-        font-size: 0.78rem;
-        font-weight: 700;
-        cursor: pointer;
-    }
-
-    @media (prefers-color-scheme: dark) {
-        .cloud-auth-box {
-            background: #19141e;
-            color: #f4eef8;
-        }
-
-        .cloud-auth-box p,
-        .cloud-auth-box label {
-            color: #d8cae4;
-        }
-
-        .cloud-auth-box input {
-            border-color: #4a3a55;
-            background: #17121c;
-            color: #f4eef8;
-        }
-
-        .cloud-auth-box input::placeholder {
-            color: #8f7fa1;
-        }
-    }
-</style>
-
-<div id="cloudAuthOverlay">
-    <div class="cloud-auth-box">
-        <div class="cloud-auth-icon">☁️</div>
-        <h2 id="cloudAuthTitle">Kosten-App anmelden</h2>
-        <p id="cloudAuthText">
-            Melde dich an, damit deine Daten auf allen Geräten synchron bleiben.
-        </p>
-
-        <label for="cloudAuthEmail">E-Mail-Adresse</label>
-        <input id="cloudAuthEmail" type="email" inputmode="email"
-               autocomplete="email" placeholder="name@beispiel.de">
-
-        <label for="cloudAuthPassword">Passwort</label>
-        <input id="cloudAuthPassword" type="password"
-               autocomplete="current-password" placeholder="Mindestens 8 Zeichen">
-
-        <button class="cloud-auth-primary" id="cloudAuthSubmit"
-                onclick="cloudHandleAuth()">
-            Anmelden
-        </button>
-
-        <button class="cloud-auth-secondary" id="cloudAuthSwitch"
-                onclick="cloudToggleMode()">
-            Noch kein Konto? Registrieren
-        </button>
-
-        <div id="cloudAuthMessage"></div>
-    </div>
-</div>
-
-<button id="cloudSyncBadge" onclick="cloudSignOut()">
-    ☁️ Synchronisiert
-</button>
-
-<script>
-    /* ============================================================
-       SUPABASE: HIER DEINE BEIDEN WERTE EINTRAGEN
-       ============================================================ */
-
-    const CLOUD_SUPABASE_URL = "https://guhugeusbbusknuixuxy.supabase.co";
-    const CLOUD_SUPABASE_KEY = "sb_publishable_QhP4TFOvspuVa1s_w5EpUA_1m0vXGdn";
-
-    const cloudSupabase = supabase.createClient(
-        CLOUD_SUPABASE_URL,
-        CLOUD_SUPABASE_KEY
-    );
-
-    let cloudUser = null;
-    let cloudAuthMode = "login";
-    let cloudReady = false;
-    let cloudSaving = false;
-    let cloudSaveTimer = null;
-
-    const CLOUD_LOCAL_KEYS = [
-        "costEntries1",
-        "costEntries2",
-        "costEntries3",
-        "costEntries4",
-        "costEntries5",
-        "currentAccountBalance"
-    ];
-
-    function cloudSetMessage(message = "", isSuccess = false) {
-        const box = document.getElementById("cloudAuthMessage");
-        box.textContent = message;
-        box.style.color = isSuccess ? "#1f9d55" : "#c0392b";
-    }
-
-    function cloudToggleMode() {
-        cloudAuthMode = cloudAuthMode === "login" ? "signup" : "login";
-
-        document.getElementById("cloudAuthTitle").textContent =
-            cloudAuthMode === "login"
-                ? "Kosten-App anmelden"
-                : "Konto erstellen";
-
-        document.getElementById("cloudAuthText").textContent =
-            cloudAuthMode === "login"
-                ? "Melde dich an, damit deine Daten auf allen Geräten synchron bleiben."
-                : "Erstelle dein persönliches Konto für die zentrale Synchronisation.";
-
-        document.getElementById("cloudAuthSubmit").textContent =
-            cloudAuthMode === "login" ? "Anmelden" : "Konto erstellen";
-
-        document.getElementById("cloudAuthSwitch").textContent =
-            cloudAuthMode === "login"
-                ? "Noch kein Konto? Registrieren"
-                : "Schon registriert? Anmelden";
-
-        cloudSetMessage("");
-    }
-
-    async function cloudHandleAuth() {
-        const email = document.getElementById("cloudAuthEmail").value.trim();
-        const password = document.getElementById("cloudAuthPassword").value;
-
-        if (!email || !password) {
-            cloudSetMessage("Bitte E-Mail-Adresse und Passwort eingeben.");
-            return;
-        }
-
-        if (password.length < 8) {
-            cloudSetMessage("Das Passwort muss mindestens 8 Zeichen haben.");
-            return;
-        }
-
-        const button = document.getElementById("cloudAuthSubmit");
-        button.disabled = true;
-        button.textContent =
-            cloudAuthMode === "login"
-                ? "Anmeldung läuft …"
-                : "Konto wird erstellt …";
-
-        try {
-            if (cloudAuthMode === "signup") {
-                const { data, error } = await cloudSupabase.auth.signUp({
-                    email,
-                    password
-                });
-
-                if (error) throw error;
-
-                if (!data.session) {
-                    cloudSetMessage(
-                        "Konto erstellt. Bitte ggf. E-Mail bestätigen und danach anmelden.",
-                        true
-                    );
-                }
-            } else {
-                const { error } = await cloudSupabase.auth.signInWithPassword({
-                    email,
-                    password
-                });
-
-                if (error) throw error;
-            }
-        } catch (error) {
-            cloudSetMessage(error.message || "Anmeldung nicht möglich.");
-        } finally {
-            button.disabled = false;
-            button.textContent =
-                cloudAuthMode === "login" ? "Anmelden" : "Konto erstellen";
-        }
-    }
-
-    function cloudGetLocalData() {
-        const data = {};
-
-        CLOUD_LOCAL_KEYS.forEach(key => {
-            data[key] = localStorage.getItem(key);
-        });
-
-        return data;
-    }
-
-    function cloudHasAnyLocalData() {
-        return CLOUD_LOCAL_KEYS.some(key => {
-            const value = localStorage.getItem(key);
-
-            if (!value) return false;
-
-            if (key.startsWith("costEntries")) {
-                try {
-                    return JSON.parse(value).length > 0;
-                } catch {
-                    return false;
-                }
-            }
-
-            return true;
-        });
-    }
-
-    function cloudApplyData(data) {
-        if (!data) return;
-
-        CLOUD_LOCAL_KEYS.forEach(key => {
-            const value = data[key];
-
-            if (value === null || value === undefined || value === "") {
-                localStorage.removeItem(key);
-            } else {
-                localStorage.setItem(key, value);
-            }
-        });
-
-        if (typeof renderEverything === "function") {
-            renderEverything();
-        }
-    }
-
-    function cloudShowBadge(text = "☁️ Synchronisiert") {
-        const badge = document.getElementById("cloudSyncBadge");
-        badge.textContent = text;
-        badge.style.display = "block";
-    }
-
-    async function cloudLoadOrCreateData() {
-        if (!cloudUser) return;
-
-        const { data, error } = await cloudSupabase
-            .from("cost_settings")
-            .select("app_data")
-            .eq("user_id", cloudUser.id)
-            .maybeSingle();
-
-        if (error) {
-            console.error(error);
-            cloudShowBadge("☁️ Sync-Fehler");
-            alert("Cloud-Daten konnten nicht geladen werden: " + error.message);
-            return;
-        }
-
-        if (data && data.app_data) {
-            cloudApplyData(data.app_data);
-            cloudShowBadge("☁️ Synchronisiert");
-        } else {
-            /*
-             * Beim allerersten Start:
-             * Auf dem iPhone werden die vorhandenen lokalen Daten
-             * automatisch als erster Cloud-Stand gespeichert.
-             */
-            await cloudSaveNow(true);
-
-            cloudShowBadge(
-                cloudHasAnyLocalData()
-                    ? "☁️ iPhone-Daten übertragen"
-                    : "☁️ Neue Cloud-Datenbank"
-            );
-        }
-
-        cloudReady = true;
-    }
-
-    async function cloudSaveNow(firstSave = false) {
-        if (!cloudUser || cloudSaving) return;
-
-        cloudSaving = true;
-
-        try {
-            const payload = {
-                user_id: cloudUser.id,
-                app_data: cloudGetLocalData(),
-                updated_at: new Date().toISOString()
-            };
-
-            const { error } = await cloudSupabase
-                .from("cost_settings")
-                .upsert(payload, { onConflict: "user_id" });
-
-            if (error) throw error;
-
-            cloudShowBadge(
-                firstSave
-                    ? "☁️ Cloud-Speicher aktiv"
-                    : "☁️ Synchronisiert"
-            );
-        } catch (error) {
-            console.error(error);
-            cloudShowBadge("☁️ Sync-Fehler");
-        } finally {
-            cloudSaving = false;
-        }
-    }
-
-    function cloudQueueSave() {
-        if (!cloudReady || !cloudUser) return;
-
-        clearTimeout(cloudSaveTimer);
-
-        cloudShowBadge("☁️ Speichert …");
-
-        cloudSaveTimer = setTimeout(() => {
-            cloudSaveNow();
-        }, 700);
-    }
-
-    async function cloudImportLocalDataAgain() {
-        if (!cloudUser) return;
-
-        const confirmed = confirm(
-            "Lokale Daten dieses Geräts in die Cloud übertragen?\n\n" +
-            "Achtung: Der aktuelle Cloud-Datenstand wird dabei vollständig ersetzt.\n\n" +
-            "Das bitte nur auf dem iPhone mit deinem führenden Datenbestand ausführen."
-        );
-
-        if (!confirmed) return;
-
-        await cloudSaveNow(true);
-        alert("Lokale Daten wurden in die Cloud übertragen.");
-    }
-
-    async function cloudSignOut() {
-        const confirmed = confirm("Wirklich aus der Kosten-App abmelden?");
-        if (!confirmed) return;
-
-        await cloudSupabase.auth.signOut();
-    }
-
-    /*
-     * Bestehende App-Funktionen schreiben weiter in localStorage.
-     * Dieser kleine Hook erkennt jede Änderung und synchronisiert sie.
-     */
-    const originalSetItem = localStorage.setItem.bind(localStorage);
-    const originalRemoveItem = localStorage.removeItem.bind(localStorage);
-
-    localStorage.setItem = function(key, value) {
-        originalSetItem(key, value);
-
-        if (CLOUD_LOCAL_KEYS.includes(key)) {
-            cloudQueueSave();
-        }
-    };
-
-    localStorage.removeItem = function(key) {
-        originalRemoveItem(key);
-
-        if (CLOUD_LOCAL_KEYS.includes(key)) {
-            cloudQueueSave();
-        }
-    };
-
-    /*
-     * Auch beim Zurückkehren in die App wird der aktuelle Stand geladen.
-     */
-    document.addEventListener("visibilitychange", () => {
-        if (!document.hidden && cloudReady) {
-            cloudLoadOrCreateData();
-        }
-    });
-
-    window.addEventListener("focus", () => {
-        if (cloudReady) {
-            cloudLoadOrCreateData();
-        }
-    });
-
-    /*
-     * Optionaler Button-Zusatz zur vorhandenen App.
-     * Er erscheint im Register „Alle“ unter den Backup-Buttons.
-     */
-    window.addEventListener("load", () => {
-        setTimeout(() => {
-            const toolRow = document.querySelector('[data-tab="0"] .tool-row');
-
-            if (toolRow && !document.getElementById("cloudImportButton")) {
-                const button = document.createElement("button");
-                button.id = "cloudImportButton";
-                button.className = "tool-btn secondary";
-                button.textContent = "Lokale Daten in Cloud übertragen";
-                button.onclick = cloudImportLocalDataAgain;
-
-                toolRow.appendChild(button);
-            }
-        }, 500);
-    });
-
-    cloudSupabase.auth.onAuthStateChange(async (_event, session) => {
-        cloudUser = session?.user || null;
-
-        if (!cloudUser) {
-            cloudReady = false;
-            document.getElementById("cloudAuthOverlay").style.display = "flex";
-            document.getElementById("cloudSyncBadge").style.display = "none";
-            return;
-        }
-
-        document.getElementById("cloudAuthOverlay").style.display = "none";
-
-        await cloudLoadOrCreateData();
-    });
-
-    (async function cloudInit() {
-        const { data } = await cloudSupabase.auth.getSession();
-        cloudUser = data.session?.user || null;
-
-        if (cloudUser) {
-            document.getElementById("cloudAuthOverlay").style.display = "none";
-            await cloudLoadOrCreateData();
-        }
-    })();
-</script>
 
         body {
-            background-image: url('hintergrund.jpg');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
+            color: var(--text);
+            background: #08070a url("hintergrund.jpg") center / cover fixed;
             padding:
                 calc(env(safe-area-inset-top) + 10px)
                 10px
-                calc(env(safe-area-inset-bottom) + 90px);
+                calc(env(safe-area-inset-bottom) + 92px);
         }
 
-        .app {
+        button, input, textarea {
+            font-family: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Anmeldung */
+
+        #authScreen {
+            width: 100%;
+            max-width: 470px;
+            margin: 5vh auto 0;
+            padding: 25px 20px;
+            border-radius: 26px;
+            background: var(--bg);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+        }
+
+        .auth-icon {
+            display: grid;
+            place-items: center;
+            width: 62px;
+            height: 62px;
+            margin: 0 auto 14px;
+            border-radius: 20px;
+            background: var(--primary);
+            color: white;
+            font-size: 2rem;
+        }
+
+        #authScreen h1 {
+            margin: 0;
+            color: var(--primary);
+            text-align: center;
+            font-size: 1.6rem;
+        }
+
+        #authScreen p {
+            margin: 9px 0 22px;
+            color: var(--muted);
+            text-align: center;
+            line-height: 1.45;
+        }
+
+        .auth-message {
+            min-height: 22px;
+            margin-top: 12px;
+            text-align: center;
+            color: var(--danger);
+            font-size: .92rem;
+        }
+
+        .auth-message.success {
+            color: var(--success);
+        }
+
+        .auth-switch {
+            margin-top: 18px;
+            text-align: center;
+            color: var(--muted);
+            font-size: .92rem;
+        }
+
+        .link-btn {
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: var(--primary);
+            font-size: inherit;
+            font-weight: 800;
+        }
+
+        /* Haupt-App */
+
+        #appShell {
+            display: none;
+            width: 100%;
             max-width: 560px;
             margin: 0 auto;
-            background: var(--bg-card);
-            backdrop-filter: blur(12px);
-            border-radius: 26px;
             overflow: hidden;
+            border-radius: 26px;
+            background: var(--bg);
             box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
         }
 
         .header {
-            background: var(--primary);
-            color: #fff;
-            padding: 18px 16px 16px;
             position: sticky;
             top: 0;
             z-index: 20;
+            padding: 17px 16px 15px;
+            background: var(--primary);
+            color: white;
         }
 
         .header-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
+            gap: 10px;
         }
 
         .header h1 {
             margin: 0 0 4px;
-            font-size: 1.5rem;
-            line-height: 1.15;
+            font-size: 1.45rem;
         }
 
         .header p {
             margin: 0;
-            font-size: 0.98rem;
-            opacity: 0.95;
+            opacity: .9;
+            font-size: .9rem;
         }
 
-        .btn-export {
-            border: 1px solid rgba(255,255,255,0.35);
-            background: rgba(255,255,255,0.16);
-            color: #fff;
-            border-radius: 14px;
-            padding: 12px 14px;
-            min-height: 46px;
-            font-size: 0.96rem;
-            font-weight: 700;
-            cursor: pointer;
-            white-space: nowrap;
+        .header-actions {
+            display: flex;
+            gap: 7px;
+        }
+
+        .header-btn {
+            min-height: 43px;
+            padding: 8px 10px;
+            border: 1px solid rgba(255,255,255,.35);
+            border-radius: 13px;
+            background: rgba(255,255,255,.16);
+            color: white;
+            font-size: .85rem;
+            font-weight: 800;
         }
 
         .tabs {
@@ -634,8 +189,8 @@
             gap: 8px;
             overflow-x: auto;
             padding: 12px 12px 10px;
-            background: #faf7fb;
             border-bottom: 1px solid var(--border);
+            background: #faf7fb;
             scrollbar-width: none;
         }
 
@@ -644,22 +199,21 @@
         }
 
         .tab-btn {
-            border: none;
+            flex: 0 0 auto;
+            min-height: 49px;
+            padding: 12px 16px;
+            border: 0;
             border-radius: 16px;
             background: #efe8f0;
-            color: #555;
-            padding: 13px 16px;
-            min-height: 50px;
-            font-size: 0.98rem;
+            color: #5a515c;
+            font-size: .96rem;
             font-weight: 800;
-            cursor: pointer;
             white-space: nowrap;
-            flex: 0 0 auto;
         }
 
         .tab-btn.active {
             background: var(--primary);
-            color: #fff;
+            color: white;
         }
 
         .tab-content {
@@ -670,35 +224,34 @@
             display: block;
         }
 
-        .panel-hint {
-            padding: 16px;
+        .hint {
+            padding: 14px 16px;
             border-bottom: 1px solid var(--border);
             background: #f8f8f8;
-            font-size: 0.98rem;
-            line-height: 1.45;
-            color: #6e6e6e;
+            color: var(--muted);
             text-align: center;
+            font-size: .93rem;
+            line-height: 1.4;
         }
 
-        .tool-row {
+        .toolbar {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 9px;
             padding: 12px 14px;
-            background: #fff;
             border-bottom: 1px solid var(--border);
+            background: var(--card);
         }
 
         .tool-btn {
-            border: none;
-            border-radius: 14px;
             min-height: 48px;
-            padding: 10px 12px;
-            font-size: 0.98rem;
-            font-weight: 800;
-            cursor: pointer;
+            padding: 10px;
+            border: 0;
+            border-radius: 14px;
             background: var(--primary);
-            color: #fff;
+            color: white;
+            font-size: .91rem;
+            font-weight: 800;
         }
 
         .tool-btn.secondary {
@@ -708,141 +261,125 @@
 
         .tool-note {
             padding: 0 14px 12px;
-            background: #fff;
-            color: #8b8b8b;
-            font-size: 0.83rem;
-            line-height: 1.35;
             border-bottom: 1px solid var(--border);
+            background: var(--card);
+            color: #888;
+            font-size: .8rem;
+            line-height: 1.35;
         }
 
-        .filter-btns {
+        .filters {
             display: flex;
             gap: 8px;
             padding: 12px 14px;
             border-bottom: 1px solid var(--border);
-            background: #fff;
+            background: var(--card);
         }
 
         .filter-btn {
             flex: 1;
+            min-height: 47px;
             border: 1px solid #ddd;
-            background: #fff;
-            color: #444;
             border-radius: 14px;
-            min-height: 48px;
-            padding: 10px 12px;
-            font-size: 0.98rem;
+            background: white;
+            color: #444;
             font-weight: 800;
-            cursor: pointer;
+            font-size: .94rem;
         }
 
         .filter-btn.active {
-            background: var(--primary);
-            color: #fff;
             border-color: var(--primary);
+            background: var(--primary);
+            color: white;
         }
 
-        .summary-cards,
-        .month-cards {
+        .summary-grid {
             display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 10px;
             padding: 14px;
-        }
-
-        .summary-cards {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            background: #fff;
             border-bottom: 1px solid var(--border);
-        }
-
-        .month-cards {
-            grid-template-columns: 1fr;
-            padding-top: 10px;
-            background: #fff;
-            border-bottom: 1px solid var(--border);
+            background: var(--card);
         }
 
         .summary-card,
         .month-card,
         .balance-card {
-            background: #fafafa;
+            padding: 12px 14px;
             border: 1px solid #ececec;
             border-radius: 18px;
-            padding: 12px 14px;
+            background: #fafafa;
         }
 
         .summary-card.expense {
-            background: #fff3f2;
             border-color: #ffd9d4;
+            background: #fff3f2;
         }
 
-        .summary-card.credit {
-            background: #eefaf3;
-            border-color: #d4f3df;
-        }
-
+        .summary-card.credit,
         .summary-card.income {
-            background: #eefaf3;
             border-color: #d4f3df;
+            background: #eefaf3;
         }
 
         .summary-card.sale {
-            background: #f7effb;
             border-color: #ead6f5;
+            background: #f7effb;
         }
 
         .balance-card {
-            background: #f7f4f8;
             border-color: #eadbef;
+            background: #f7f4f8;
         }
 
-        .summary-label,
-        .month-label,
-        .balance-label {
-            font-size: 0.9rem;
-            color: var(--muted);
+        .card-label {
             margin-bottom: 6px;
+            color: var(--muted);
+            font-size: .85rem;
             font-weight: 700;
         }
 
-        .summary-value,
-        .balance-value {
-            font-size: 1.15rem;
+        .card-value {
+            font-size: 1.12rem;
             font-weight: 900;
-            line-height: 1.2;
         }
 
-        .summary-value.expense,
-        .month-value.expense {
+        .expense {
             color: var(--expense);
         }
 
-        .summary-value.credit,
-        .month-value.credit {
+        .credit {
             color: var(--credit);
         }
 
-        .summary-value.income,
-        .month-value.income {
+        .income {
             color: var(--income);
         }
 
-        .summary-value.sale,
-        .month-value.sale {
+        .sale {
             color: var(--sale);
         }
 
-        .balance-value {
-            color: var(--primary);
-            margin-bottom: 10px;
+        .card-sub {
+            margin-top: 6px;
+            color: #888;
+            font-size: .77rem;
+            line-height: 1.3;
         }
 
-        .summary-sub,
-        .balance-sub {
-            margin-top: 6px;
-            font-size: 0.82rem;
-            color: #888;
-            line-height: 1.35;
+        .section-title {
+            padding: 14px 14px 6px;
+            color: #555;
+            font-size: .96rem;
+            font-weight: 900;
+        }
+
+        .month-cards {
+            display: grid;
+            gap: 10px;
+            padding: 10px 14px 14px;
+            border-bottom: 1px solid var(--border);
+            background: var(--card);
         }
 
         .balance-row {
@@ -851,217 +388,9 @@
             align-items: center;
         }
 
-        .balance-input {
-            flex: 1;
-            border: 1px solid #d8d8d8;
-            border-radius: 14px;
-            padding: 12px 14px;
-            font-size: 1rem;
-            font-family: inherit;
-        }
-
-        .balance-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(145, 12, 147, 0.12);
-        }
-
-        .balance-save {
-            border: none;
-            background: var(--primary);
-            color: #fff;
-            border-radius: 14px;
-            padding: 12px 14px;
-            min-height: 46px;
-            font-size: 0.95rem;
-            font-weight: 800;
-            cursor: pointer;
-        }
-
-        .section-title {
-            padding: 14px 14px 6px;
-            font-size: 0.98rem;
-            font-weight: 900;
-            color: #555;
-        }
-
-        .terms-section {
-            padding: 14px;
-            min-height: 220px;
-        }
-
-        .terms-empty {
-            padding: 38px 16px;
-            text-align: center;
-            color: #888;
-            font-size: 1rem;
-        }
-
-        .term-item {
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-            background: #f8f8f9;
-            border-left: 5px solid var(--primary);
-            border-radius: 18px;
-            padding: 14px;
-            margin-bottom: 12px;
-        }
-
-        .term-item.completed {
-            background: #f1f7f2;
-            border-left-color: var(--success);
-            opacity: 0.84;
-        }
-
-        .term-item.completed .term-title {
-            text-decoration: line-through;
-            color: #8d8d8d;
-        }
-
-        .term-item.overdue {
-            background: #fff0f0;
-            border-left-color: var(--overdue);
-        }
-
-        .term-checkbox {
-            width: 24px;
-            height: 24px;
-            margin-top: 2px;
-            flex-shrink: 0;
-        }
-
-        .term-content {
+        .balance-row input {
             flex: 1;
             min-width: 0;
-        }
-
-        .term-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 10px;
-        }
-
-        .term-title {
-            font-size: 1.06rem;
-            font-weight: 800;
-            line-height: 1.35;
-            word-break: break-word;
-        }
-
-        .term-amount {
-            font-size: 1rem;
-            font-weight: 900;
-            white-space: nowrap;
-        }
-
-        .term-amount.expense {
-            color: var(--expense);
-        }
-
-        .term-amount.credit {
-            color: var(--credit);
-        }
-
-        .term-amount.income {
-            color: var(--income);
-        }
-
-        .term-amount.sale {
-            color: var(--sale);
-        }
-
-        .term-meta {
-            margin-top: 6px;
-            font-size: 0.95rem;
-            color: var(--muted);
-            line-height: 1.4;
-        }
-
-        .term-note {
-            margin-top: 8px;
-            font-size: 0.96rem;
-            color: #707070;
-            line-height: 1.45;
-            word-break: break-word;
-        }
-
-        .term-source {
-            margin-top: 8px;
-            font-size: 0.88rem;
-            color: #8b8b8b;
-            font-weight: 700;
-        }
-
-        .badge {
-            display: inline-block;
-            margin-top: 8px;
-            margin-right: 6px;
-            padding: 5px 10px;
-            border-radius: 999px;
-            font-size: 0.78rem;
-            font-weight: 800;
-        }
-
-        .badge.done {
-            background: #e6f5ea;
-            color: #2e7d32;
-        }
-
-        .badge.open {
-            background: #f8eefe;
-            color: var(--primary);
-        }
-
-        .badge.expense {
-            background: #fff0ee;
-            color: var(--expense);
-        }
-
-        .badge.credit {
-            background: #eaf8ee;
-            color: var(--credit);
-        }
-
-        .badge.income {
-            background: #eaf8ee;
-            color: var(--income);
-        }
-
-        .badge.sale {
-            background: #f3eafb;
-            color: var(--sale);
-        }
-
-        .term-actions {
-            display: grid;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-
-        .term-action-btn {
-            border: none;
-            border-radius: 12px;
-            min-width: 44px;
-            min-height: 40px;
-            padding: 8px 10px;
-            font-size: 0.88rem;
-            font-weight: 800;
-            cursor: pointer;
-            color: #fff;
-        }
-
-        .btn-edit {
-            background: var(--info);
-        }
-
-        .btn-delete {
-            background: var(--danger);
-        }
-
-        .month-card {
-            background: #fff;
         }
 
         .month-grid {
@@ -1074,69 +403,208 @@
             display: flex;
             justify-content: space-between;
             gap: 12px;
-            font-size: 0.95rem;
-        }
-
-        .month-row strong {
-            font-weight: 800;
+            font-size: .92rem;
         }
 
         .month-empty {
-            padding: 0 14px 18px;
+            padding: 0 14px 14px;
             color: #888;
-            font-size: 0.95rem;
+            font-size: .91rem;
+        }
+
+        .entries {
+            min-height: 240px;
+            padding: 14px;
+        }
+
+        .empty {
+            padding: 38px 16px;
+            color: #888;
+            text-align: center;
+        }
+
+        .entry {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            padding: 14px;
+            border-left: 5px solid var(--primary);
+            border-radius: 18px;
+            background: #f8f8f9;
+        }
+
+        .entry.completed {
+            border-left-color: var(--success);
+            background: #f1f7f2;
+            opacity: .84;
+        }
+
+        .entry.completed .entry-title {
+            color: #8d8d8d;
+            text-decoration: line-through;
+        }
+
+        .entry.overdue {
+            border-left-color: var(--warning);
+            background: #fff0f0;
+        }
+
+        .entry-check {
+            width: 24px;
+            height: 24px;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .entry-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .entry-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .entry-title {
+            font-size: 1.04rem;
+            font-weight: 800;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+
+        .entry-amount {
+            flex-shrink: 0;
+            white-space: nowrap;
+            font-size: .98rem;
+            font-weight: 900;
+        }
+
+        .entry-meta {
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: .92rem;
+        }
+
+        .entry-note {
+            margin-top: 8px;
+            color: #707070;
+            font-size: .93rem;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .entry-source {
+            margin-top: 8px;
+            color: #8b8b8b;
+            font-size: .83rem;
+            font-weight: 700;
+        }
+
+        .badge {
+            display: inline-block;
+            margin-top: 8px;
+            margin-right: 5px;
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: .74rem;
+            font-weight: 800;
+        }
+
+        .badge.open {
+            background: #f8eefe;
+            color: var(--primary);
+        }
+
+        .badge.done {
+            background: #e6f5ea;
+            color: #2e7d32;
+        }
+
+        .badge.expense {
+            background: #fff0ee;
+            color: var(--expense);
+        }
+
+        .badge.credit,
+        .badge.income {
+            background: #eaf8ee;
+            color: var(--credit);
+        }
+
+        .badge.sale {
+            background: #f3eafb;
+            color: var(--sale);
+        }
+
+        .entry-actions {
+            display: grid;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .action-btn {
+            min-width: 43px;
+            min-height: 40px;
+            border: 0;
+            border-radius: 12px;
+            color: white;
+            font-size: .9rem;
+            font-weight: 800;
+        }
+
+        .action-edit {
+            background: var(--info);
+        }
+
+        .action-delete {
+            background: var(--danger);
         }
 
         .fab {
             position: fixed;
             right: 18px;
             bottom: calc(env(safe-area-inset-bottom) + 18px);
+            z-index: 40;
             width: 62px;
             height: 62px;
-            border: none;
+            border: 0;
             border-radius: 50%;
             background: var(--primary);
-            color: #fff;
+            color: white;
+            box-shadow: 0 10px 26px rgba(145,12,147,.35);
             font-size: 2rem;
-            line-height: 1;
-            box-shadow: 0 10px 26px rgba(145, 12, 147, 0.35);
-            cursor: pointer;
-            z-index: 40;
         }
 
-        .fab.hidden {
+        .overlay {
             display: none;
-        }
-
-        .sheet-backdrop {
             position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.45);
-            display: none;
             z-index: 90;
+            inset: 0;
+            background: rgba(0,0,0,.48);
         }
 
-        .sheet-backdrop.open {
+        .overlay.open {
             display: block;
         }
 
         .sheet {
             position: fixed;
-            left: 0;
             right: 0;
             bottom: 0;
-            background: #fff;
-            border-radius: 24px 24px 0 0;
-            padding:
-                14px
-                16px
-                calc(env(safe-area-inset-bottom) + 18px);
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
-            transform: translateY(100%);
-            transition: transform 0.22s ease;
+            left: 0;
             z-index: 100;
             max-width: 560px;
-            margin: 0 auto;
+            margin: auto;
+            padding: 14px 16px calc(env(safe-area-inset-bottom) + 18px);
+            border-radius: 24px 24px 0 0;
+            background: white;
+            box-shadow: 0 -10px 30px rgba(0,0,0,.2);
+            transform: translateY(110%);
+            transition: transform .22s ease;
         }
 
         .sheet.open {
@@ -1146,21 +614,21 @@
         .sheet-handle {
             width: 46px;
             height: 5px;
+            margin: 0 auto 14px;
             border-radius: 999px;
             background: #ddd;
-            margin: 0 auto 14px;
         }
 
         .sheet h2 {
-            margin: 0 0 14px;
-            font-size: 1.24rem;
+            margin: 0 0 8px;
             color: var(--primary);
+            font-size: 1.22rem;
         }
 
         .sheet-hint {
-            margin: -4px 0 12px;
-            font-size: 0.88rem;
+            margin: 0 0 13px;
             color: #777;
+            font-size: .87rem;
         }
 
         .form-group {
@@ -1170,37 +638,30 @@
         .form-group label {
             display: block;
             margin-bottom: 6px;
-            font-size: 0.98rem;
-            font-weight: 800;
             color: #333;
+            font-size: .95rem;
+            font-weight: 800;
         }
 
-        .form-group input,
-        .form-group textarea {
+        input, textarea {
             width: 100%;
+            padding: 14px 15px;
             border: 1px solid #d8d8d8;
             border-radius: 16px;
-            padding: 14px 15px;
-            font-size: 1.03rem;
-            line-height: 1.35;
-            font-family: inherit;
-            background: #fff;
+            background: white;
+            color: var(--text);
+            font-size: 1rem;
         }
 
-        .form-group textarea {
-            min-height: 92px;
+        textarea {
+            min-height: 88px;
             resize: vertical;
         }
 
-        .form-group input:focus,
-        .form-group textarea:focus {
+        input:focus, textarea:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(145, 12, 147, 0.12);
-        }
-
-        .hidden {
-            display: none !important;
+            box-shadow: 0 0 0 4px rgba(145,12,147,.12);
         }
 
         .flow-toggle {
@@ -1210,38 +671,35 @@
         }
 
         .flow-btn {
+            min-height: 57px;
             border: 2px solid transparent;
             border-radius: 16px;
-            min-height: 58px;
-            font-size: 1.08rem;
+            font-size: 1.05rem;
             font-weight: 900;
-            cursor: pointer;
-            background: #f2f2f2;
-            transition: 0.15s ease;
         }
 
         .flow-btn.expense {
-            color: var(--expense);
-            background: #fff3f2;
             border-color: #ffd9d4;
+            background: #fff3f2;
+            color: var(--expense);
         }
 
         .flow-btn.credit {
-            color: var(--credit);
-            background: #eefaf3;
             border-color: #d4f3df;
+            background: #eefaf3;
+            color: var(--credit);
         }
 
         .flow-btn.active.expense {
-            background: var(--expense);
-            color: #fff;
             border-color: var(--expense);
+            background: var(--expense);
+            color: white;
         }
 
         .flow-btn.active.credit {
-            background: var(--credit);
-            color: #fff;
             border-color: var(--credit);
+            background: var(--credit);
+            color: white;
         }
 
         .sheet-actions {
@@ -1250,15 +708,18 @@
             margin-top: 8px;
         }
 
-        .btn-secondary,
-        .btn-primary {
+        .btn-primary, .btn-secondary {
             flex: 1;
-            border: none;
             min-height: 52px;
+            border: 0;
             border-radius: 16px;
-            font-size: 1.02rem;
+            font-size: 1rem;
             font-weight: 800;
-            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
         }
 
         .btn-secondary {
@@ -1266,61 +727,33 @@
             color: #333;
         }
 
-        .btn-primary {
-            background: var(--primary);
-            color: #fff;
-        }
-
-        @media (min-width: 430px) {
-            .header h1 { font-size: 1.65rem; }
-            .term-title { font-size: 1.1rem; }
-            .term-meta, .term-note { font-size: 0.98rem; }
-            .summary-value, .balance-value { font-size: 1.22rem; }
-            .flow-btn { font-size: 1.12rem; }
-        }
-
         @media (prefers-color-scheme: dark) {
             :root {
-                --bg-card: rgba(20, 17, 24, 0.96);
+                --bg: rgba(20,17,24,.97);
+                --card: #141118;
                 --text: #f4eef8;
                 --muted: #b8aac6;
                 --border: #3a2f43;
-                --shadow: 0 12px 36px rgba(0,0,0,0.45);
             }
 
             body {
                 background-color: #09070c;
             }
 
-            .app,
-            .sheet {
-                background: rgba(20, 17, 24, 0.96);
-                color: var(--text);
-            }
-
-            .tabs {
-                background: #17131b;
-                border-bottom-color: var(--border);
+            .tabs,
+            .hint,
+            .toolbar,
+            .tool-note,
+            .filters,
+            .summary-grid,
+            .month-cards {
+                border-color: var(--border);
+                background: #141118;
             }
 
             .tab-btn {
                 background: #241d2a;
                 color: #ddd2e7;
-            }
-
-            .tab-btn.active {
-                background: var(--primary);
-                color: #fff;
-            }
-
-            .panel-hint,
-            .tool-row,
-            .tool-note,
-            .filter-btns,
-            .summary-cards,
-            .month-cards {
-                background: #141118;
-                border-color: var(--border);
             }
 
             .tool-btn.secondary {
@@ -1329,92 +762,64 @@
             }
 
             .filter-btn {
+                border-color: #4a3a55;
                 background: #221c28;
                 color: #ece3f3;
-                border-color: #4a3a55;
-            }
-
-            .filter-btn.active {
-                background: var(--primary);
-                color: #fff;
-                border-color: var(--primary);
             }
 
             .summary-card,
             .month-card,
             .balance-card,
-            .term-item {
-                background: #1b1620;
+            .entry {
                 border-color: #352a3d;
+                background: #1b1620;
                 color: var(--text);
             }
 
             .summary-card.expense {
-                background: #2b1919;
                 border-color: #653838;
+                background: #2b1919;
             }
 
             .summary-card.credit,
             .summary-card.income {
-                background: #15261c;
                 border-color: #2d5d42;
+                background: #15261c;
             }
 
             .summary-card.sale {
-                background: #24182d;
                 border-color: #5a3f6d;
+                background: #24182d;
             }
 
             .balance-card {
-                background: #201827;
                 border-color: #4c3a58;
+                background: #201827;
             }
 
-            .section-title,
-            .summary-label,
-            .month-label,
-            .balance-label,
+            .entry.completed {
+                background: #1a241d;
+            }
+
+            .entry.overdue {
+                background: #2a1818;
+            }
+
+            .sheet {
+                background: #19141e;
+            }
+
             .form-group label {
                 color: #ddd1e8;
             }
 
-            .summary-sub,
-            .balance-sub,
-            .month-empty,
-            .terms-empty,
-            .term-meta,
-            .term-note,
-            .term-source,
-            .sheet-hint,
-            .tool-note {
-                color: #b8aac6;
-            }
-
-            .term-item.completed {
-                background: #1a241d;
-                border-left-color: #4caf50;
-            }
-
-            .term-item.completed .term-title {
-                color: #9ea79f;
-            }
-
-            .term-item.overdue {
-                background: #2a1818;
-                border-left-color: #f44336;
-            }
-
-            .form-group input,
-            .form-group textarea,
-            .balance-input {
+            input, textarea {
+                border-color: #473750;
                 background: #17121c;
                 color: #f4eef8;
-                border-color: #473750;
             }
 
-            .form-group input::placeholder,
-            .form-group textarea::placeholder,
-            .balance-input::placeholder {
+            input::placeholder, textarea::placeholder {
                 color: #8f7fa1;
             }
 
@@ -1423,585 +828,593 @@
                 color: #f1e9f6;
             }
 
-            .badge.open {
-                background: #382245;
-                color: #eadbf3;
-            }
-
-            .badge.done {
-                background: #1f3a28;
-                color: #bde8ca;
-            }
-
-            .badge.expense {
-                background: #3a1e1e;
-                color: #ffb8ad;
-            }
-
-            .badge.credit,
-            .badge.income {
-                background: #173021;
-                color: #a8e5c3;
-            }
-
-            .badge.sale {
-                background: #322041;
-                color: #dcbef4;
+            .entry-meta,
+            .entry-note,
+            .entry-source,
+            .tool-note,
+            .hint,
+            .auth-switch,
+            #authScreen p {
+                color: #b8aac6;
             }
 
             .flow-btn.expense {
-                background: #341b1b;
                 border-color: #7a3c3c;
+                background: #341b1b;
                 color: #ffb9af;
             }
 
             .flow-btn.credit {
-                background: #173021;
                 border-color: #2f6a49;
+                background: #173021;
                 color: #a6e8c4;
-            }
-
-            .flow-btn.active.expense {
-                background: var(--expense);
-                color: #fff;
-                border-color: var(--expense);
-            }
-
-            .flow-btn.active.credit {
-                background: var(--credit);
-                color: #fff;
-                border-color: var(--credit);
             }
         }
     </style>
 </head>
+
 <body>
-    <div class="app">
+
+    <!-- Anmeldung -->
+    <section id="authScreen">
+        <div class="auth-icon">💶</div>
+        <h1 id="authTitle">Offene Kosten</h1>
+        <p id="authIntro">Melde dich an, damit deine Daten auf allen Geräten synchron bleiben.</p>
+
+        <div class="form-group">
+            <label for="authEmail">E-Mail-Adresse</label>
+            <input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="name@beispiel.de">
+        </div>
+
+        <div class="form-group">
+            <label for="authPassword">Passwort</label>
+            <input id="authPassword" type="password" autocomplete="current-password" placeholder="Mindestens 8 Zeichen">
+        </div>
+
+        <button class="btn-primary" id="authSubmit" onclick="handleAuth()">Anmelden</button>
+
+        <div class="auth-switch">
+            <span id="authSwitchText">Noch kein Konto?</span>
+            <button class="link-btn" id="authSwitchBtn" onclick="toggleAuthMode()">Registrieren</button>
+        </div>
+
+        <div id="authMessage" class="auth-message"></div>
+    </section>
+
+    <!-- Haupt-App -->
+    <main id="appShell">
         <div class="header">
             <div class="header-row">
                 <div>
                     <h1>💶 Offene Kosten</h1>
-                    <p>Ausgaben und Einnahmen im Blick</p>
+                    <p id="syncStatus">Daten werden geladen …</p>
                 </div>
-                <button class="btn-export" onclick="exportToPDF()">PDF</button>
+                <div class="header-actions">
+                    <button class="header-btn" onclick="exportToPDF()">PDF</button>
+                    <button class="header-btn" onclick="signOut()">Abmelden</button>
+                </div>
             </div>
         </div>
 
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab(0, this)">Alle</button>
-            <button class="tab-btn" onclick="switchTab(1, this)">Amazon Rate</button>
-            <button class="tab-btn" onclick="switchTab(2, this)">Paypal Rate</button>
-            <button class="tab-btn" onclick="switchTab(3, this)">Kreditkarte</button>
-            <button class="tab-btn" onclick="switchTab(4, this)">Außenstände</button>
-            <button class="tab-btn" onclick="switchTab(5, this)">Offene Verkäufe</button>
-        </div>
+        <div class="tabs" id="tabs"></div>
+        <div id="content"></div>
+    </main>
 
-        <div class="tab-content active" data-tab="0">
-            <div class="panel-hint">
-                Gesamtübersicht ohne „Offene Verkäufe“. Gutschriften werden separat ausgewiesen.
-            </div>
+    <button class="fab hidden" id="fabBtn" onclick="openCreateSheet()">+</button>
 
-            <div class="tool-row">
-                <button class="tool-btn" onclick="exportBackup()">Backup sichern</button>
-                <button class="tool-btn secondary" onclick="triggerBackupImport()">Backup laden</button>
-            </div>
-            <div class="tool-note">
-                „Backup laden“ überschreibt den aktuellen Datenstand. Auf dem iPhone öffnet sich beim Export möglichst das Teilen-Menü.
-            </div>
+    <input id="backupInput" class="hidden" type="file" accept=".json,application/json" onchange="handleBackupImport(event)">
 
-            <div class="filter-btns">
-                <button class="filter-btn active" onclick="setFilter(0, 'all', this)">Alle</button>
-                <button class="filter-btn" onclick="setFilter(0, 'pending', this)">Offen</button>
-                <button class="filter-btn" onclick="setFilter(0, 'completed', this)">Erledigt</button>
-            </div>
-            <div class="summary-cards" id="summary0"></div>
-            <div class="section-title">Monatsübersicht</div>
-            <div class="month-cards" id="monthCards0"></div>
-            <div class="terms-section" id="termsList0"></div>
-        </div>
+    <div class="overlay" id="overlay" onclick="closeSheet()"></div>
 
-        <div class="tab-content" data-tab="1">
-            <div class="filter-btns">
-                <button class="filter-btn active" onclick="setFilter(1, 'all', this)">Alle</button>
-                <button class="filter-btn" onclick="setFilter(1, 'pending', this)">Offen</button>
-                <button class="filter-btn" onclick="setFilter(1, 'completed', this)">Erledigt</button>
-            </div>
-            <div class="summary-cards" id="summary1"></div>
-            <div class="section-title">Monatsübersicht</div>
-            <div class="month-cards" id="monthCards1"></div>
-            <div class="terms-section" id="termsList1"></div>
-        </div>
-
-        <div class="tab-content" data-tab="2">
-            <div class="filter-btns">
-                <button class="filter-btn active" onclick="setFilter(2, 'all', this)">Alle</button>
-                <button class="filter-btn" onclick="setFilter(2, 'pending', this)">Offen</button>
-                <button class="filter-btn" onclick="setFilter(2, 'completed', this)">Erledigt</button>
-            </div>
-            <div class="summary-cards" id="summary2"></div>
-            <div class="section-title">Monatsübersicht</div>
-            <div class="month-cards" id="monthCards2"></div>
-            <div class="terms-section" id="termsList2"></div>
-        </div>
-
-        <div class="tab-content" data-tab="3">
-            <div class="filter-btns">
-                <button class="filter-btn active" onclick="setFilter(3, 'all', this)">Alle</button>
-                <button class="filter-btn" onclick="setFilter(3, 'pending', this)">Offen</button>
-                <button class="filter-btn" onclick="setFilter(3, 'completed', this)">Erledigt</button>
-            </div>
-            <div class="summary-cards" id="summary3"></div>
-            <div class="section-title">Monatsübersicht</div>
-            <div class="month-cards" id="monthCards3"></div>
-            <div class="terms-section" id="termsList3"></div>
-        </div>
-
-        <div class="tab-content" data-tab="4">
-            <div class="filter-btns">
-                <button class="filter-btn active" onclick="setFilter(4, 'all', this)">Alle</button>
-                <button class="filter-btn" onclick="setFilter(4, 'pending', this)">Offen</button>
-                <button class="filter-btn" onclick="setFilter(4, 'completed', this)">Erledigt</button>
-            </div>
-            <div class="summary-cards" id="summary4"></div>
-            <div class="section-title">Monatsübersicht</div>
-            <div class="month-cards" id="monthCards4"></div>
-            <div class="terms-section" id="termsList4"></div>
-        </div>
-
-        <div class="tab-content" data-tab="5">
-            <div class="filter-btns">
-                <button class="filter-btn active" onclick="setFilter(5, 'all', this)">Alle</button>
-                <button class="filter-btn" onclick="setFilter(5, 'pending', this)">Offen</button>
-                <button class="filter-btn" onclick="setFilter(5, 'completed', this)">Erledigt</button>
-            </div>
-            <div class="summary-cards" id="summary5"></div>
-            <div class="section-title">Monatsübersicht</div>
-            <div class="month-cards" id="monthCards5"></div>
-            <div class="terms-section" id="termsList5"></div>
-        </div>
-    </div>
-
-    <button class="fab" id="fabBtn" onclick="openCreateSheet()">+</button>
-
-    <input
-        type="file"
-        id="backupFileInput"
-        class="hidden"
-        accept=".json,application/json"
-        onchange="handleBackupImport(event)"
-    />
-
-    <div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
-
-    <div class="sheet" id="entrySheet">
+    <section class="sheet" id="entrySheet">
         <div class="sheet-handle"></div>
         <h2 id="sheetTitle">Neuer Eintrag</h2>
-        <div class="sheet-hint" id="sheetHint"></div>
+        <p class="sheet-hint" id="sheetHint"></p>
 
-        <div class="form-group hidden" id="entryFlowWrap">
+        <div class="form-group hidden" id="flowGroup">
             <label>Art</label>
             <div class="flow-toggle">
-                <button type="button" class="flow-btn expense active" id="flowExpenseBtn" onclick="setFlow('expense')">Belastung</button>
-                <button type="button" class="flow-btn credit" id="flowCreditBtn" onclick="setFlow('credit')">Gutschrift</button>
+                <button type="button" class="flow-btn expense active" id="expenseBtn" onclick="setFlow('expense')">Belastung</button>
+                <button type="button" class="flow-btn credit" id="creditBtn" onclick="setFlow('credit')">Gutschrift</button>
             </div>
-            <input type="hidden" id="entryFlow" value="expense" />
         </div>
 
         <div class="form-group">
-            <label for="entryText">Bezeichnung</label>
-            <input type="text" id="entryText" placeholder="z. B. Monatsrate, Rückzahlung, Ebay-Verkauf" />
+            <label for="entryTitle">Bezeichnung</label>
+            <input id="entryTitle" type="text" placeholder="z. B. Monatsrate, Rückzahlung, Ebay-Verkauf">
         </div>
 
         <div class="form-group">
             <label for="entryAmount">Betrag in Euro</label>
-            <input type="text" id="entryAmount" inputmode="decimal" placeholder="z. B. 49,90" />
+            <input id="entryAmount" type="text" inputmode="decimal" placeholder="z. B. 49,90">
         </div>
 
         <div class="form-group">
             <label for="entryDate">Fällig am</label>
-            <input type="date" id="entryDate" />
+            <input id="entryDate" type="date">
         </div>
 
         <div class="form-group">
             <label for="entryNote">Notiz (optional)</label>
-            <textarea id="entryNote" placeholder="z. B. Bestellnummer, Ansprechpartner, Plattform ..."></textarea>
+            <textarea id="entryNote" placeholder="z. B. Bestellnummer, Ansprechpartner, Plattform …"></textarea>
         </div>
 
         <div class="sheet-actions">
             <button class="btn-secondary" onclick="closeSheet()">Abbrechen</button>
-            <button class="btn-primary" id="saveBtn" onclick="saveEntry()">Speichern</button>
+            <button class="btn-primary" id="saveEntryBtn" onclick="saveEntry()">Speichern</button>
         </div>
-    </div>
+    </section>
 
     <script>
-        const TAB_CONFIG = [
-            { name: 'Alle', kind: 'all', amountRequired: false },
-            { name: 'Amazon Rate', kind: 'mixed' },
-            { name: 'Paypal Rate', kind: 'mixed' },
-            { name: 'Kreditkarte', kind: 'mixed' },
-            { name: 'Außenstände', kind: 'income' },
-            { name: 'Offene Verkäufe', kind: 'sale', amountRequired: false }
+        /* ============================================================
+           HIER DEINE SUPABASE-WERTE EINFÜGEN
+           ============================================================ */
+
+        const SUPABASE_URL = "https://guhugeusbbusknuixuxy.supabase.co";
+        const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_QhP4TFOvspuVa1s_w5EpUA_1m0vXGdn";
+
+        /* Beispiel:
+        const SUPABASE_URL = "https://abcxyzabcdef.supabase.co";
+        const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_xxxxxxxxxxxxxxxxx";
+        */
+
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+        const REGISTERS = [
+            { id: 0, name: "Alle", kind: "all" },
+            { id: 1, name: "Amazon Rate", kind: "mixed" },
+            { id: 2, name: "Paypal Rate", kind: "mixed" },
+            { id: 3, name: "Kreditkarte", kind: "mixed" },
+            { id: 4, name: "Außenstände", kind: "income" },
+            { id: 5, name: "Offene Verkäufe", kind: "sale" }
         ];
 
-        const filters = ['all', 'all', 'all', 'all', 'all', 'all'];
+        let user = null;
+        let entries = [];
+        let accountBalance = null;
         let currentTab = 0;
-        let formMode = 'create'; // create | edit
-        let formContext = { tabIndex: null, id: null };
+        let filter = "all";
+        let authMode = "login";
+        let currentFlow = "expense";
+        let editId = null;
 
         function todayString() {
             const d = new Date();
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
         }
 
-        function escapeHtml(text) {
-            const map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            };
-            return String(text || '').replace(/[&<>"']/g, m => map[m]);
+        function esc(text) {
+            return String(text || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         function formatEuro(value) {
-            return new Intl.NumberFormat('de-DE', {
-                style: 'currency',
-                currency: 'EUR'
+            return new Intl.NumberFormat("de-DE", {
+                style: "currency",
+                currency: "EUR"
             }).format(Number(value || 0));
         }
 
-        function parseEuroInput(input) {
-            if (!input || !String(input).trim()) return null;
+        function parseEuro(value) {
+            if (!value || !String(value).trim()) return null;
 
-            let value = String(input).trim()
-                .replace(/\s/g, '')
-                .replace(/€/g, '');
+            let text = String(value)
+                .trim()
+                .replace(/\s/g, "")
+                .replace(/€/g, "");
 
-            if (value.includes(',') && value.includes('.')) {
-                if (value.lastIndexOf(',') > value.lastIndexOf('.')) {
-                    value = value.replace(/\./g, '').replace(',', '.');
+            if (text.includes(",") && text.includes(".")) {
+                if (text.lastIndexOf(",") > text.lastIndexOf(".")) {
+                    text = text.replace(/\./g, "").replace(",", ".");
                 } else {
-                    value = value.replace(/,/g, '');
+                    text = text.replace(/,/g, "");
                 }
-            } else if (value.includes(',')) {
-                value = value.replace(/\./g, '').replace(',', '.');
+            } else if (text.includes(",")) {
+                text = text.replace(/\./g, "").replace(",", ".");
             }
 
-            const num = Number(value);
-            return Number.isFinite(num) ? Number(num.toFixed(2)) : null;
+            const number = Number(text);
+            return Number.isFinite(number) ? Number(number.toFixed(2)) : null;
         }
 
-        function formatDate(dateStr) {
-            const date = new Date(dateStr + 'T00:00:00');
-            return date.toLocaleDateString('de-DE', {
-                weekday: 'short',
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
+        function formatDate(dateString) {
+            return new Date(dateString + "T00:00:00").toLocaleDateString("de-DE", {
+                weekday: "short",
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric"
             });
         }
 
-        function getMonthKey(dateStr) {
-            return String(dateStr).slice(0, 7);
-        }
-
-        function formatMonthKey(monthKey) {
-            const [year, month] = monthKey.split('-');
-            const date = new Date(Number(year), Number(month) - 1, 1);
-            return date.toLocaleDateString('de-DE', {
-                month: 'long',
-                year: 'numeric'
+        function monthName(key) {
+            const [year, month] = key.split("-");
+            return new Date(Number(year), Number(month) - 1, 1).toLocaleDateString("de-DE", {
+                month: "long",
+                year: "numeric"
             });
         }
 
-        function isOverdue(dateStr, completed) {
-            if (completed) return false;
+        function getMonthKey(date) {
+            return String(date).slice(0, 7);
+        }
+
+        function overdue(entry) {
+            if (entry.completed) return false;
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            const d = new Date(dateStr + 'T00:00:00');
-            return d < today;
+            return new Date(entry.due_date + "T00:00:00") < today;
         }
 
-        function getEntries(tabIndex) {
-            const data = localStorage.getItem(`costEntries${tabIndex}`);
-            return data ? JSON.parse(data) : [];
+        function flowLabel(flow) {
+            return {
+                expense: "Belastung",
+                credit: "Gutschrift",
+                income: "Einnahme",
+                sale: "Verkauf"
+            }[flow] || "";
         }
 
-        function saveEntries(tabIndex, entries) {
-            localStorage.setItem(`costEntries${tabIndex}`, JSON.stringify(entries));
+        function setStatus(text) {
+            document.getElementById("syncStatus").textContent = text;
         }
 
-        function getAccountBalance() {
-            const raw = localStorage.getItem('currentAccountBalance');
-            if (!raw) return null;
-            const num = Number(raw);
-            return Number.isFinite(num) ? num : null;
+        /* Anmeldung */
+
+        function authMessage(text = "", success = false) {
+            const element = document.getElementById("authMessage");
+            element.textContent = text;
+            element.classList.toggle("success", success);
         }
 
-        function saveAccountBalance() {
-            const input = document.getElementById('accountBalanceInput');
-            if (!input) return;
+        function toggleAuthMode() {
+            authMode = authMode === "login" ? "signup" : "login";
 
-            const value = parseEuroInput(input.value);
-            if (input.value.trim() && value === null) {
-                alert('Bitte einen gültigen Kontostand eingeben, z. B. 1245,50.');
+            document.getElementById("authTitle").textContent =
+                authMode === "login" ? "Offene Kosten" : "Konto erstellen";
+
+            document.getElementById("authIntro").textContent =
+                authMode === "login"
+                    ? "Melde dich an, damit deine Daten auf allen Geräten synchron bleiben."
+                    : "Erstelle dein persönliches Konto für die zentrale Synchronisation.";
+
+            document.getElementById("authSubmit").textContent =
+                authMode === "login" ? "Anmelden" : "Konto erstellen";
+
+            document.getElementById("authSwitchText").textContent =
+                authMode === "login" ? "Noch kein Konto?" : "Schon registriert?";
+
+            document.getElementById("authSwitchBtn").textContent =
+                authMode === "login" ? "Registrieren" : "Anmelden";
+
+            authMessage();
+        }
+
+        async function handleAuth() {
+            const email = document.getElementById("authEmail").value.trim();
+            const password = document.getElementById("authPassword").value;
+            const button = document.getElementById("authSubmit");
+
+            if (!email || !password) {
+                authMessage("Bitte E-Mail-Adresse und Passwort eingeben.");
                 return;
             }
 
-            if (value === null) {
-                localStorage.removeItem('currentAccountBalance');
-            } else {
-                localStorage.setItem('currentAccountBalance', String(value));
+            if (password.length < 8) {
+                authMessage("Das Passwort muss mindestens 8 Zeichen haben.");
+                return;
             }
 
-            renderAllMonths();
+            button.disabled = true;
+            button.textContent = authMode === "login" ? "Anmeldung läuft …" : "Konto wird erstellt …";
+
+            try {
+                if (authMode === "signup") {
+                    const { data, error } = await db.auth.signUp({ email, password });
+                    if (error) throw error;
+
+                    if (!data.session) {
+                        authMessage("Konto erstellt. Bitte prüfe gegebenenfalls dein E-Mail-Postfach.", true);
+                    }
+                } else {
+                    const { error } = await db.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                }
+            } catch (error) {
+                authMessage(error.message || "Anmeldung nicht möglich.");
+            } finally {
+                button.disabled = false;
+                button.textContent = authMode === "login" ? "Anmelden" : "Konto erstellen";
+            }
         }
 
-        function sortEntries(entries) {
-            return [...entries].sort((a, b) => {
-                if (a.completed !== b.completed) return Number(a.completed) - Number(b.completed);
-                return new Date(a.date) - new Date(b.date);
-            });
+        async function signOut() {
+            if (!confirm("Wirklich abmelden?")) return;
+            await db.auth.signOut();
         }
 
-        function updateFab() {
-            const fab = document.getElementById('fabBtn');
-            if (currentTab === 0) fab.classList.add('hidden');
-            else fab.classList.remove('hidden');
+        /* Cloud laden und speichern */
+
+        async function loadData() {
+            if (!user) return;
+
+            setStatus("Synchronisiere …");
+
+            try {
+                const [entriesResult, settingsResult] = await Promise.all([
+                    db.from("cost_entries")
+                        .select("*")
+                        .order("due_date", { ascending: true }),
+
+                    db.from("cost_settings")
+                        .select("*")
+                        .maybeSingle()
+                ]);
+
+                if (entriesResult.error) throw entriesResult.error;
+                if (settingsResult.error) throw settingsResult.error;
+
+                entries = entriesResult.data || [];
+                accountBalance = settingsResult.data?.current_account_balance === null ||
+                                 settingsResult.data?.current_account_balance === undefined
+                    ? null
+                    : Number(settingsResult.data.current_account_balance);
+
+                render();
+
+                const time = new Date().toLocaleTimeString("de-DE", {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                });
+
+                setStatus(`Synchronisiert · ${time}`);
+            } catch (error) {
+                console.error(error);
+                setStatus("Synchronisation fehlgeschlagen");
+                alert("Cloud-Daten konnten nicht geladen werden.\n\n" + (error.message || ""));
+            }
         }
 
-        function switchTab(tabIndex, btn) {
-            currentTab = tabIndex;
+        async function saveBalance() {
+            const input = document.getElementById("balanceInput");
+            const value = parseEuro(input.value);
 
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(tab => tab.classList.remove('active'));
+            if (input.value.trim() && value === null) {
+                alert("Bitte einen gültigen Kontostand eingeben.");
+                return;
+            }
 
-            document.querySelector(`[data-tab="${tabIndex}"]`).classList.add('active');
-            btn.classList.add('active');
+            try {
+                const { error } = await db
+                    .from("cost_settings")
+                    .upsert({
+                        user_id: user.id,
+                        current_account_balance: value,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: "user_id" });
 
-            updateFab();
-            renderEverything();
+                if (error) throw error;
+
+                accountBalance = value;
+                render();
+                setStatus("Kontostand gespeichert");
+            } catch (error) {
+                alert("Kontostand konnte nicht gespeichert werden.\n\n" + (error.message || ""));
+            }
         }
 
-        function setFilter(tabIndex, filter, btn) {
-            filters[tabIndex] = filter;
-            const group = document.querySelector(`[data-tab="${tabIndex}"] .filter-btns`);
-            group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderEverything();
-        }
+        /* Einträge */
 
         function setFlow(flow) {
-            document.getElementById('entryFlow').value = flow;
-            document.getElementById('flowExpenseBtn').classList.toggle('active', flow === 'expense');
-            document.getElementById('flowCreditBtn').classList.toggle('active', flow === 'credit');
-        }
-
-        function openSheetBase(title, hint) {
-            document.getElementById('sheetTitle').textContent = title;
-            document.getElementById('sheetHint').textContent = hint || '';
-            document.getElementById('sheetBackdrop').classList.add('open');
-            document.getElementById('entrySheet').classList.add('open');
-            setTimeout(() => document.getElementById('entryText').focus(), 120);
+            currentFlow = flow;
+            document.getElementById("expenseBtn").classList.toggle("active", flow === "expense");
+            document.getElementById("creditBtn").classList.toggle("active", flow === "credit");
         }
 
         function openCreateSheet() {
             if (currentTab === 0) return;
 
-            const config = TAB_CONFIG[currentTab];
-            formMode = 'create';
-            formContext = { tabIndex: currentTab, id: null };
+            const register = REGISTERS[currentTab];
+            editId = null;
 
-            document.getElementById('entryText').value = '';
-            document.getElementById('entryAmount').value = '';
-            document.getElementById('entryDate').value = todayString();
-            document.getElementById('entryNote').value = '';
-            document.getElementById('saveBtn').textContent = 'Speichern';
-            setFlow('expense');
+            document.getElementById("sheetTitle").textContent = `Neuer Eintrag – ${register.name}`;
+            document.getElementById("entryTitle").value = "";
+            document.getElementById("entryAmount").value = "";
+            document.getElementById("entryDate").value = todayString();
+            document.getElementById("entryNote").value = "";
+            document.getElementById("saveEntryBtn").textContent = "Speichern";
 
-            const flowWrap = document.getElementById('entryFlowWrap');
-            flowWrap.classList.toggle('hidden', config.kind !== 'mixed');
+            document.getElementById("flowGroup").classList.toggle("hidden", register.kind !== "mixed");
+            setFlow("expense");
 
-            let hint = 'Betrag ist erforderlich.';
-            if (config.kind === 'mixed') {
-                hint = 'Standard ist Belastung. Für Rückerstattungen bitte aktiv auf Gutschrift umstellen.';
-            }
-            if (config.kind === 'sale') {
-                hint = 'Betrag ist optional. Nur Einträge mit Betrag werden summiert.';
-            }
+            document.getElementById("sheetHint").textContent =
+                register.kind === "mixed"
+                    ? "Standard ist Belastung. Für Rückerstattungen bitte Gutschrift auswählen."
+                    : register.kind === "sale"
+                        ? "Betrag ist optional. Nur Einträge mit Betrag werden summiert."
+                        : "Betrag und Fälligkeitsdatum eingeben.";
 
-            openSheetBase(`Neuer Eintrag – ${config.name}`, hint);
+            openSheet();
         }
 
-        function openEditSheet(tabIndex, id) {
-            const config = TAB_CONFIG[tabIndex];
-            const entries = getEntries(tabIndex);
-            const entry = entries.find(e => e.id === id);
+        function openEditSheet(id) {
+            const entry = entries.find(item => item.id === id);
             if (!entry) return;
 
-            formMode = 'edit';
-            formContext = { tabIndex, id };
+            const register = REGISTERS[entry.register];
+            editId = id;
 
-            document.getElementById('entryText').value = entry.title || '';
-            document.getElementById('entryAmount').value = entry.amount != null ? String(entry.amount).replace('.', ',') : '';
-            document.getElementById('entryDate').value = entry.date || todayString();
-            document.getElementById('entryNote').value = entry.note || '';
-            document.getElementById('saveBtn').textContent = 'Änderungen speichern';
+            document.getElementById("sheetTitle").textContent = `Eintrag bearbeiten – ${register.name}`;
+            document.getElementById("entryTitle").value = entry.title || "";
+            document.getElementById("entryAmount").value =
+                entry.amount !== null ? String(entry.amount).replace(".", ",") : "";
+            document.getElementById("entryDate").value = entry.due_date;
+            document.getElementById("entryNote").value = entry.note || "";
+            document.getElementById("saveEntryBtn").textContent = "Änderungen speichern";
 
-            const flowWrap = document.getElementById('entryFlowWrap');
-            flowWrap.classList.toggle('hidden', config.kind !== 'mixed');
+            document.getElementById("flowGroup").classList.toggle("hidden", register.kind !== "mixed");
+            setFlow(entry.flow === "credit" ? "credit" : "expense");
 
-            if (config.kind === 'mixed') {
-                setFlow(entry.flow === 'credit' ? 'credit' : 'expense');
-            } else {
-                setFlow('expense');
-            }
+            document.getElementById("sheetHint").textContent =
+                register.kind === "mixed"
+                    ? "Belastung oder Gutschrift kann geändert werden."
+                    : "Eintrag wird zentral aktualisiert.";
 
-            let hint = 'Eintrag wird aktualisiert.';
-            if (config.kind === 'mixed') {
-                hint = 'Belastung oder Gutschrift kann angepasst werden.';
-            }
-            if (config.kind === 'sale') {
-                hint = 'Betrag ist optional. Ohne Betrag keine Summierung.';
-            }
+            openSheet();
+        }
 
-            openSheetBase(`Eintrag bearbeiten – ${config.name}`, hint);
+        function openSheet() {
+            document.getElementById("overlay").classList.add("open");
+            document.getElementById("entrySheet").classList.add("open");
+
+            setTimeout(() => document.getElementById("entryTitle").focus(), 120);
         }
 
         function closeSheet() {
-            document.getElementById('sheetBackdrop').classList.remove('open');
-            document.getElementById('entrySheet').classList.remove('open');
+            document.getElementById("overlay").classList.remove("open");
+            document.getElementById("entrySheet").classList.remove("open");
         }
 
-        function saveEntry() {
-            let tabIndex = formContext.tabIndex;
-            if (!tabIndex || tabIndex === 0) return;
+        async function saveEntry() {
+            const register = currentTab;
+            const registerInfo = REGISTERS[register];
+            const title = document.getElementById("entryTitle").value.trim();
+            const amountRaw = document.getElementById("entryAmount").value.trim();
+            const amount = parseEuro(amountRaw);
+            const dueDate = document.getElementById("entryDate").value;
+            const note = document.getElementById("entryNote").value.trim();
+            const button = document.getElementById("saveEntryBtn");
 
-            const config = TAB_CONFIG[tabIndex];
-            const title = document.getElementById('entryText').value.trim();
-            const amountRaw = document.getElementById('entryAmount').value.trim();
-            const amount = parseEuroInput(amountRaw);
-            const date = document.getElementById('entryDate').value;
-            const note = document.getElementById('entryNote').value.trim();
-
-            let flow = 'expense';
-            if (config.kind === 'mixed') flow = document.getElementById('entryFlow').value;
-            if (config.kind === 'income') flow = 'income';
-            if (config.kind === 'sale') flow = 'sale';
+            let flow = "expense";
+            if (registerInfo.kind === "mixed") flow = currentFlow;
+            if (registerInfo.kind === "income") flow = "income";
+            if (registerInfo.kind === "sale") flow = "sale";
 
             if (!title) {
-                alert('Bitte eine Bezeichnung eintragen.');
+                alert("Bitte eine Bezeichnung eintragen.");
                 return;
             }
 
-            if (!date) {
-                alert('Bitte ein Fälligkeitsdatum eintragen.');
+            if (!dueDate) {
+                alert("Bitte ein Fälligkeitsdatum eintragen.");
                 return;
             }
 
             if (amountRaw && amount === null) {
-                alert('Bitte einen gültigen Betrag eingeben, z. B. 49,90.');
+                alert("Bitte einen gültigen Betrag eingeben, z. B. 49,90.");
                 return;
             }
 
-            if (config.kind !== 'sale' && amount === null) {
-                alert('Bitte einen Betrag eingeben.');
+            if (registerInfo.kind !== "sale" && amount === null) {
+                alert("Bitte einen Betrag eingeben.");
                 return;
             }
 
-            const entries = getEntries(tabIndex);
+            button.disabled = true;
+            button.textContent = "Speichert …";
 
-            if (formMode === 'edit') {
-                const entry = entries.find(e => e.id === formContext.id);
-                if (!entry) {
-                    alert('Eintrag nicht gefunden.');
-                    return;
+            const payload = {
+                register,
+                title,
+                amount,
+                due_date: dueDate,
+                note: note || null,
+                flow,
+                updated_at: new Date().toISOString()
+            };
+
+            try {
+                let result;
+
+                if (editId) {
+                    result = await db
+                        .from("cost_entries")
+                        .update(payload)
+                        .eq("id", editId)
+                        .select()
+                        .single();
+                } else {
+                    result = await db
+                        .from("cost_entries")
+                        .insert({
+                            ...payload,
+                            completed: false
+                        })
+                        .select()
+                        .single();
                 }
 
-                entry.title = title;
-                entry.amount = amount;
-                entry.date = date;
-                entry.note = note;
-                entry.flow = flow;
-                entry.updatedAt = new Date().toISOString();
-            } else {
-                entries.push({
-                    id: Date.now(),
-                    title,
-                    amount,
-                    date,
-                    note,
-                    flow,
-                    completed: false,
-                    createdAt: new Date().toISOString()
-                });
-            }
+                if (result.error) throw result.error;
 
-            saveEntries(tabIndex, entries);
-            closeSheet();
-            renderEverything();
+                closeSheet();
+                await loadData();
+            } catch (error) {
+                alert("Eintrag konnte nicht gespeichert werden.\n\n" + (error.message || ""));
+            } finally {
+                button.disabled = false;
+                button.textContent = editId ? "Änderungen speichern" : "Speichern";
+            }
         }
 
-        function toggleCompleted(tabIndex, id) {
-            const entries = getEntries(tabIndex);
-            const entry = entries.find(e => e.id === id);
+        async function toggleCompleted(id) {
+            const entry = entries.find(item => item.id === id);
             if (!entry) return;
 
-            entry.completed = !entry.completed;
-            saveEntries(tabIndex, entries);
-            renderEverything();
-        }
+            try {
+                const { error } = await db
+                    .from("cost_entries")
+                    .update({
+                        completed: !entry.completed,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq("id", id);
 
-        function deleteEntry(tabIndex, id) {
-            const ok = confirm('Eintrag wirklich löschen?');
-            if (!ok) return;
+                if (error) throw error;
 
-            const entries = getEntries(tabIndex).filter(e => e.id !== id);
-            saveEntries(tabIndex, entries);
-            renderEverything();
-        }
-
-        function applyFilter(entries, filter) {
-            if (filter === 'pending') return entries.filter(e => !e.completed);
-            if (filter === 'completed') return entries.filter(e => e.completed);
-            return entries;
-        }
-
-        function getFlowLabel(entry) {
-            if (entry.flow === 'expense') return 'Belastung';
-            if (entry.flow === 'credit') return 'Gutschrift';
-            if (entry.flow === 'income') return 'Einnahme';
-            if (entry.flow === 'sale') return 'Verkauf';
-            return '';
-        }
-
-        function getAmountClass(entry) {
-            if (entry.flow === 'expense') return 'expense';
-            if (entry.flow === 'credit') return 'credit';
-            if (entry.flow === 'income') return 'income';
-            if (entry.flow === 'sale') return 'sale';
-            return 'expense';
-        }
-
-        function getAllListEntries() {
-            let all = [];
-            for (let i = 1; i <= 4; i++) {
-                getEntries(i).forEach(entry => {
-                    all.push({
-                        ...entry,
-                        sourceTab: i
-                    });
-                });
+                await loadData();
+            } catch (error) {
+                alert("Status konnte nicht geändert werden.\n\n" + (error.message || ""));
             }
-            return sortEntries(all);
         }
 
-        function getAllTotals() {
-            const totals = {
+        async function deleteEntry(id) {
+            if (!confirm("Eintrag wirklich löschen?")) return;
+
+            try {
+                const { error } = await db
+                    .from("cost_entries")
+                    .delete()
+                    .eq("id", id);
+
+                if (error) throw error;
+
+                await loadData();
+            } catch (error) {
+                alert("Eintrag konnte nicht gelöscht werden.\n\n" + (error.message || ""));
+            }
+        }
+
+        /* Berechnungen */
+
+        function filteredEntries(register) {
+            let list = register === 0
+                ? entries.filter(entry => entry.register >= 1 && entry.register <= 4)
+                : entries.filter(entry => entry.register === register);
+
+            if (filter === "pending") list = list.filter(entry => !entry.completed);
+            if (filter === "completed") list = list.filter(entry => entry.completed);
+
+            return [...list].sort((a, b) => {
+                if (a.completed !== b.completed) return Number(a.completed) - Number(b.completed);
+                return new Date(a.due_date) - new Date(b.due_date);
+            });
+        }
+
+        function allTotals() {
+            const total = {
                 expenseOpen: 0,
                 expenseDone: 0,
                 creditOpen: 0,
@@ -2010,676 +1423,592 @@
                 incomeDone: 0
             };
 
-            for (let i = 1; i <= 4; i++) {
-                getEntries(i).forEach(entry => {
-                    if (entry.amount == null) return;
+            entries
+                .filter(entry => entry.register >= 1 && entry.register <= 4)
+                .forEach(entry => {
+                    if (entry.amount === null) return;
 
-                    if (entry.flow === 'expense') {
-                        if (entry.completed) totals.expenseDone += entry.amount;
-                        else totals.expenseOpen += entry.amount;
+                    if (entry.flow === "expense") {
+                        entry.completed ? total.expenseDone += Number(entry.amount) : total.expenseOpen += Number(entry.amount);
                     }
 
-                    if (entry.flow === 'credit') {
-                        if (entry.completed) totals.creditDone += entry.amount;
-                        else totals.creditOpen += entry.amount;
+                    if (entry.flow === "credit") {
+                        entry.completed ? total.creditDone += Number(entry.amount) : total.creditOpen += Number(entry.amount);
                     }
 
-                    if (entry.flow === 'income') {
-                        if (entry.completed) totals.incomeDone += entry.amount;
-                        else totals.incomeOpen += entry.amount;
+                    if (entry.flow === "income") {
+                        entry.completed ? total.incomeDone += Number(entry.amount) : total.incomeOpen += Number(entry.amount);
                     }
                 });
-            }
 
-            return totals;
+            return total;
         }
 
-        function getAllMonths() {
-            const map = {};
+        function simpleTotals(register) {
+            let open = 0;
+            let done = 0;
 
-            for (let i = 1; i <= 4; i++) {
-                getEntries(i).forEach(entry => {
-                    if (entry.amount == null) return;
-
-                    const key = getMonthKey(entry.date);
-                    if (!map[key]) {
-                        map[key] = {
-                            expenseOpen: 0,
-                            expenseDone: 0,
-                            creditOpen: 0,
-                            creditDone: 0,
-                            incomeOpen: 0,
-                            incomeDone: 0
-                        };
-                    }
-
-                    if (entry.flow === 'expense') {
-                        if (entry.completed) map[key].expenseDone += entry.amount;
-                        else map[key].expenseOpen += entry.amount;
-                    }
-
-                    if (entry.flow === 'credit') {
-                        if (entry.completed) map[key].creditDone += entry.amount;
-                        else map[key].creditOpen += entry.amount;
-                    }
-
-                    if (entry.flow === 'income') {
-                        if (entry.completed) map[key].incomeDone += entry.amount;
-                        else map[key].incomeOpen += entry.amount;
-                    }
+            entries
+                .filter(entry => entry.register === register)
+                .forEach(entry => {
+                    if (entry.amount === null) return;
+                    entry.completed ? done += Number(entry.amount) : open += Number(entry.amount);
                 });
-            }
 
-            return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
+            return { open, done };
         }
 
-        function getMixedRegisterTotals(tabIndex) {
-            const entries = getEntries(tabIndex);
-            const totals = {
+        function mixedTotals(register) {
+            const total = {
                 expenseOpen: 0,
                 expenseDone: 0,
                 creditOpen: 0,
                 creditDone: 0
             };
 
-            entries.forEach(entry => {
-                if (entry.amount == null) return;
+            entries
+                .filter(entry => entry.register === register)
+                .forEach(entry => {
+                    if (entry.amount === null) return;
 
-                if (entry.flow === 'expense') {
-                    if (entry.completed) totals.expenseDone += entry.amount;
-                    else totals.expenseOpen += entry.amount;
-                }
+                    if (entry.flow === "expense") {
+                        entry.completed ? total.expenseDone += Number(entry.amount) : total.expenseOpen += Number(entry.amount);
+                    }
 
-                if (entry.flow === 'credit') {
-                    if (entry.completed) totals.creditDone += entry.amount;
-                    else totals.creditOpen += entry.amount;
-                }
-            });
+                    if (entry.flow === "credit") {
+                        entry.completed ? total.creditDone += Number(entry.amount) : total.creditOpen += Number(entry.amount);
+                    }
+                });
 
-            return totals;
+            return total;
         }
 
-        function getMixedRegisterMonths(tabIndex) {
-            const entries = getEntries(tabIndex);
+        function monthData(register) {
             const map = {};
 
-            entries.forEach(entry => {
-                if (entry.amount == null) return;
-                const key = getMonthKey(entry.date);
+            const relevant = register === 0
+                ? entries.filter(entry => entry.register >= 1 && entry.register <= 4)
+                : entries.filter(entry => entry.register === register);
+
+            relevant.forEach(entry => {
+                if (entry.amount === null) return;
+
+                const key = getMonthKey(entry.due_date);
 
                 if (!map[key]) {
                     map[key] = {
                         expenseOpen: 0,
                         expenseDone: 0,
                         creditOpen: 0,
-                        creditDone: 0
+                        creditDone: 0,
+                        incomeOpen: 0,
+                        incomeDone: 0,
+                        open: 0,
+                        done: 0
                     };
                 }
 
-                if (entry.flow === 'expense') {
-                    if (entry.completed) map[key].expenseDone += entry.amount;
-                    else map[key].expenseOpen += entry.amount;
-                }
+                const amount = Number(entry.amount);
 
-                if (entry.flow === 'credit') {
-                    if (entry.completed) map[key].creditDone += entry.amount;
-                    else map[key].creditOpen += entry.amount;
+                if (register === 0) {
+                    if (entry.flow === "expense") {
+                        entry.completed ? map[key].expenseDone += amount : map[key].expenseOpen += amount;
+                    }
+
+                    if (entry.flow === "credit") {
+                        entry.completed ? map[key].creditDone += amount : map[key].creditOpen += amount;
+                    }
+
+                    if (entry.flow === "income") {
+                        entry.completed ? map[key].incomeDone += amount : map[key].incomeOpen += amount;
+                    }
+                } else if (REGISTERS[register].kind === "mixed") {
+                    if (entry.flow === "expense") {
+                        entry.completed ? map[key].expenseDone += amount : map[key].expenseOpen += amount;
+                    }
+
+                    if (entry.flow === "credit") {
+                        entry.completed ? map[key].creditDone += amount : map[key].creditOpen += amount;
+                    }
+                } else {
+                    entry.completed ? map[key].done += amount : map[key].open += amount;
                 }
             });
 
             return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
         }
 
-        function getSimpleRegisterTotals(tabIndex) {
-            const entries = getEntries(tabIndex);
-            let open = 0;
-            let done = 0;
+        /* Darstellung */
 
-            entries.forEach(entry => {
-                if (entry.amount == null) return;
-                if (entry.completed) done += entry.amount;
-                else open += entry.amount;
-            });
-
-            return { open, done };
+        function renderTabs() {
+            document.getElementById("tabs").innerHTML = REGISTERS.map(item => `
+                <button class="tab-btn ${item.id === currentTab ? "active" : ""}"
+                        onclick="switchTab(${item.id})">
+                    ${item.name}
+                </button>
+            `).join("");
         }
 
-        function getSimpleRegisterMonths(tabIndex) {
-            const entries = getEntries(tabIndex);
-            const map = {};
-
-            entries.forEach(entry => {
-                if (entry.amount == null) return;
-                const key = getMonthKey(entry.date);
-
-                if (!map[key]) map[key] = { open: 0, done: 0 };
-                if (entry.completed) map[key].done += entry.amount;
-                else map[key].open += entry.amount;
-            });
-
-            return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
+        function switchTab(register) {
+            currentTab = register;
+            filter = "all";
+            render();
         }
 
-        function renderItem(entry, tabIndexForActions, sourceName = '') {
-            const amountHtml = entry.amount != null
-                ? `<div class="term-amount ${getAmountClass(entry)}">${formatEuro(entry.amount)}</div>`
-                : `<div class="term-amount sale">ohne Betrag</div>`;
+        function renderSummary(register) {
+            if (register === 0) {
+                const total = allTotals();
 
-            const flowBadge = entry.flow
-                ? `<div class="badge ${getAmountClass(entry)}">${getFlowLabel(entry)}</div>`
-                : '';
+                return `
+                    <div class="summary-grid">
+                        <div class="summary-card expense"><div class="card-label">Ausgaben offen</div><div class="card-value expense">${formatEuro(total.expenseOpen)}</div></div>
+                        <div class="summary-card expense"><div class="card-label">Ausgaben erledigt</div><div class="card-value expense">${formatEuro(total.expenseDone)}</div></div>
+                        <div class="summary-card credit"><div class="card-label">Gutschriften offen</div><div class="card-value credit">${formatEuro(total.creditOpen)}</div></div>
+                        <div class="summary-card credit"><div class="card-label">Gutschriften erledigt</div><div class="card-value credit">${formatEuro(total.creditDone)}</div></div>
+                        <div class="summary-card income"><div class="card-label">Einnahmen offen</div><div class="card-value income">${formatEuro(total.incomeOpen)}</div><div class="card-sub">Nur Außenstände</div></div>
+                        <div class="summary-card income"><div class="card-label">Einnahmen erledigt</div><div class="card-value income">${formatEuro(total.incomeDone)}</div><div class="card-sub">Nur Außenstände</div></div>
+                    </div>
+                `;
+            }
+
+            const info = REGISTERS[register];
+
+            if (info.kind === "mixed") {
+                const total = mixedTotals(register);
+
+                return `
+                    <div class="summary-grid">
+                        <div class="summary-card expense"><div class="card-label">Belastung offen</div><div class="card-value expense">${formatEuro(total.expenseOpen)}</div></div>
+                        <div class="summary-card expense"><div class="card-label">Belastung erledigt</div><div class="card-value expense">${formatEuro(total.expenseDone)}</div></div>
+                        <div class="summary-card credit"><div class="card-label">Gutschrift offen</div><div class="card-value credit">${formatEuro(total.creditOpen)}</div></div>
+                        <div class="summary-card credit"><div class="card-label">Gutschrift erledigt</div><div class="card-value credit">${formatEuro(total.creditDone)}</div></div>
+                    </div>
+                `;
+            }
+
+            const total = simpleTotals(register);
+            const className = info.kind === "income" ? "income" : "sale";
+            const note = info.kind === "sale"
+                ? "Nur Einträge mit Betrag werden summiert."
+                : "Summen enthalten offene und erledigte Einträge.";
 
             return `
-                <div class="term-item ${entry.completed ? 'completed' : ''} ${isOverdue(entry.date, entry.completed) ? 'overdue' : ''}">
-                    <input
-                        type="checkbox"
-                        class="term-checkbox"
-                        ${entry.completed ? 'checked' : ''}
-                        onchange="toggleCompleted(${tabIndexForActions}, ${entry.id})"
-                    />
-                    <div class="term-content">
-                        <div class="term-top">
-                            <div class="term-title">${escapeHtml(entry.title)}</div>
-                            ${amountHtml}
+                <div class="summary-grid">
+                    <div class="summary-card ${className}">
+                        <div class="card-label">Summe offen</div>
+                        <div class="card-value ${className}">${formatEuro(total.open)}</div>
+                        <div class="card-sub">${note}</div>
+                    </div>
+                    <div class="summary-card ${className}">
+                        <div class="card-label">Summe erledigt</div>
+                        <div class="card-value ${className}">${formatEuro(total.done)}</div>
+                        <div class="card-sub">Erledigte Einträge bleiben sichtbar.</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMonths(register) {
+            const months = monthData(register);
+
+            let html = `<div class="section-title">Monatsübersicht</div><div class="month-cards">`;
+
+            if (register === 0) {
+                html += `
+                    <div class="balance-card">
+                        <div class="card-label">Aktueller Kontostand</div>
+                        <div class="card-value" style="color:var(--primary);margin-bottom:10px;">
+                            ${accountBalance === null ? "nicht gesetzt" : formatEuro(accountBalance)}
+                        </div>
+                        <div class="balance-row">
+                            <input id="balanceInput" type="text" inputmode="decimal"
+                                   placeholder="z. B. 1245,50"
+                                   value="${accountBalance === null ? "" : String(accountBalance).replace(".", ",")}">
+                            <button class="tool-btn" style="min-height:46px;" onclick="saveBalance()">Speichern</button>
+                        </div>
+                        <div class="card-sub">Nur zur Anzeige. Fließt nicht in Berechnungen ein.</div>
+                    </div>
+                `;
+            }
+
+            if (!months.length) {
+                html += `<div class="month-empty">Noch keine Monatssummen vorhanden.</div></div>`;
+                return html;
+            }
+
+            months.forEach(([key, values]) => {
+                let rows = "";
+
+                if (register === 0) {
+                    rows = `
+                        <div class="month-row"><span>Ausgaben offen</span><strong class="expense">${formatEuro(values.expenseOpen)}</strong></div>
+                        <div class="month-row"><span>Ausgaben erledigt</span><strong class="expense">${formatEuro(values.expenseDone)}</strong></div>
+                        <div class="month-row"><span>Gutschriften offen</span><strong class="credit">${formatEuro(values.creditOpen)}</strong></div>
+                        <div class="month-row"><span>Gutschriften erledigt</span><strong class="credit">${formatEuro(values.creditDone)}</strong></div>
+                        <div class="month-row"><span>Einnahmen offen</span><strong class="income">${formatEuro(values.incomeOpen)}</strong></div>
+                        <div class="month-row"><span>Einnahmen erledigt</span><strong class="income">${formatEuro(values.incomeDone)}</strong></div>
+                    `;
+                } else if (REGISTERS[register].kind === "mixed") {
+                    rows = `
+                        <div class="month-row"><span>Belastung offen</span><strong class="expense">${formatEuro(values.expenseOpen)}</strong></div>
+                        <div class="month-row"><span>Belastung erledigt</span><strong class="expense">${formatEuro(values.expenseDone)}</strong></div>
+                        <div class="month-row"><span>Gutschrift offen</span><strong class="credit">${formatEuro(values.creditOpen)}</strong></div>
+                        <div class="month-row"><span>Gutschrift erledigt</span><strong class="credit">${formatEuro(values.creditDone)}</strong></div>
+                    `;
+                } else {
+                    const color = REGISTERS[register].kind === "income" ? "income" : "sale";
+                    rows = `
+                        <div class="month-row"><span>Offen</span><strong class="${color}">${formatEuro(values.open)}</strong></div>
+                        <div class="month-row"><span>Erledigt</span><strong class="${color}">${formatEuro(values.done)}</strong></div>
+                    `;
+                }
+
+                html += `
+                    <div class="month-card">
+                        <div class="card-label">${monthName(key)}</div>
+                        <div class="month-grid">${rows}</div>
+                    </div>
+                `;
+            });
+
+            return html + `</div>`;
+        }
+
+        function renderEntry(entry, showSource = false) {
+            const amount = entry.amount === null
+                ? `<span class="entry-amount sale">ohne Betrag</span>`
+                : `<span class="entry-amount ${entry.flow}">${formatEuro(entry.amount)}</span>`;
+
+            return `
+                <div class="entry ${entry.completed ? "completed" : ""} ${overdue(entry) ? "overdue" : ""}">
+                    <input class="entry-check" type="checkbox" ${entry.completed ? "checked" : ""}
+                           onchange="toggleCompleted('${entry.id}')">
+
+                    <div class="entry-main">
+                        <div class="entry-top">
+                            <div class="entry-title">${esc(entry.title)}</div>
+                            ${amount}
                         </div>
 
-                        <div class="term-meta">
-                            ${formatDate(entry.date)}
-                            ${isOverdue(entry.date, entry.completed) ? ' • ⚠️ Überfällig' : ''}
+                        <div class="entry-meta">
+                            ${formatDate(entry.due_date)}
+                            ${overdue(entry) ? " • ⚠️ Überfällig" : ""}
                         </div>
 
-                        ${entry.note ? `<div class="term-note">${escapeHtml(entry.note)}</div>` : ''}
+                        ${entry.note ? `<div class="entry-note">${esc(entry.note)}</div>` : ""}
 
                         <div>
-                            <span class="badge ${entry.completed ? 'done' : 'open'}">${entry.completed ? 'Erledigt' : 'Offen'}</span>
-                            ${flowBadge}
+                            <span class="badge ${entry.completed ? "done" : "open"}">${entry.completed ? "Erledigt" : "Offen"}</span>
+                            <span class="badge ${entry.flow}">${flowLabel(entry.flow)}</span>
                         </div>
 
-                        ${sourceName ? `<div class="term-source">📂 ${escapeHtml(sourceName)}</div>` : ''}
+                        ${showSource ? `<div class="entry-source">📂 ${REGISTERS[entry.register].name}</div>` : ""}
                     </div>
 
-                    <div class="term-actions">
-                        <button class="term-action-btn btn-edit" onclick="openEditSheet(${tabIndexForActions}, ${entry.id})">✏️</button>
-                        <button class="term-action-btn btn-delete" onclick="deleteEntry(${tabIndexForActions}, ${entry.id})">🗑️</button>
+                    <div class="entry-actions">
+                        <button class="action-btn action-edit" onclick="openEditSheet('${entry.id}')">✏️</button>
+                        <button class="action-btn action-delete" onclick="deleteEntry('${entry.id}')">🗑️</button>
                     </div>
                 </div>
             `;
         }
 
-        function renderAllSummary() {
-            const totals = getAllTotals();
-            const container = document.getElementById('summary0');
+        function renderEntries(register) {
+            const list = filteredEntries(register);
 
-            container.innerHTML = `
-                <div class="summary-card expense">
-                    <div class="summary-label">Ausgaben offen</div>
-                    <div class="summary-value expense">${formatEuro(totals.expenseOpen)}</div>
+            if (!list.length) {
+                return `<div class="entries"><div class="empty">Keine Einträge</div></div>`;
+            }
+
+            return `<div class="entries">${list.map(item => renderEntry(item, register === 0)).join("")}</div>`;
+        }
+
+        function render() {
+            renderTabs();
+
+            const info = REGISTERS[currentTab];
+            const showFab = currentTab !== 0;
+
+            document.getElementById("fabBtn").classList.toggle("hidden", !showFab);
+
+            const topTools = currentTab === 0 ? `
+                <div class="hint">
+                    Gesamtübersicht ohne „Offene Verkäufe“. Gutschriften werden separat ausgewiesen.
                 </div>
-                <div class="summary-card expense">
-                    <div class="summary-label">Ausgaben erledigt</div>
-                    <div class="summary-value expense">${formatEuro(totals.expenseDone)}</div>
+
+                <div class="toolbar">
+                    <button class="tool-btn" onclick="importLocalIphoneData()">Lokale iPhone-Daten importieren</button>
+                    <button class="tool-btn secondary" onclick="exportBackup()">Backup sichern</button>
                 </div>
-                <div class="summary-card credit">
-                    <div class="summary-label">Gutschriften offen</div>
-                    <div class="summary-value credit">${formatEuro(totals.creditOpen)}</div>
+
+                <div class="toolbar" style="padding-top:0;">
+                    <button class="tool-btn secondary" onclick="triggerBackupImport()">Backup laden</button>
+                    <button class="tool-btn secondary" onclick="loadData()">Jetzt synchronisieren</button>
                 </div>
-                <div class="summary-card credit">
-                    <div class="summary-label">Gutschriften erledigt</div>
-                    <div class="summary-value credit">${formatEuro(totals.creditDone)}</div>
+
+                <div class="tool-note">
+                    Den lokalen Import nur einmal auf dem iPhone mit deinem führenden Datenbestand ausführen.
                 </div>
-                <div class="summary-card income">
-                    <div class="summary-label">Einnahmen offen</div>
-                    <div class="summary-value income">${formatEuro(totals.incomeOpen)}</div>
-                    <div class="summary-sub">Nur Außenstände</div>
-                </div>
-                <div class="summary-card income">
-                    <div class="summary-label">Einnahmen erledigt</div>
-                    <div class="summary-value income">${formatEuro(totals.incomeDone)}</div>
-                    <div class="summary-sub">Nur Außenstände</div>
-                </div>
+            ` : "";
+
+            document.getElementById("content").innerHTML = `
+                <section class="tab-content active">
+                    ${topTools}
+
+                    <div class="filters">
+                        <button class="filter-btn ${filter === "all" ? "active" : ""}" onclick="setFilter('all')">Alle</button>
+                        <button class="filter-btn ${filter === "pending" ? "active" : ""}" onclick="setFilter('pending')">Offen</button>
+                        <button class="filter-btn ${filter === "completed" ? "active" : ""}" onclick="setFilter('completed')">Erledigt</button>
+                    </div>
+
+                    ${renderSummary(currentTab)}
+                    ${renderMonths(currentTab)}
+                    ${renderEntries(currentTab)}
+                </section>
             `;
         }
 
-        function renderAllMonths() {
-            const container = document.getElementById('monthCards0');
-            const months = getAllMonths();
-            const balance = getAccountBalance();
-
-            let html = `
-                <div class="balance-card">
-                    <div class="balance-label">Aktueller Kontostand</div>
-                    <div class="balance-value">${balance !== null ? formatEuro(balance) : 'nicht gesetzt'}</div>
-                    <div class="balance-row">
-                        <input
-                            id="accountBalanceInput"
-                            class="balance-input"
-                            type="text"
-                            inputmode="decimal"
-                            placeholder="z. B. 1245,50"
-                            value="${balance !== null ? String(balance).replace('.', ',') : ''}"
-                        />
-                        <button class="balance-save" onclick="saveAccountBalance()">Speichern</button>
-                    </div>
-                    <div class="balance-sub">Nur zur Anzeige. Fließt nicht in Berechnungen ein.</div>
-                </div>
-            `;
-
-            if (!months.length) {
-                html += `<div class="month-empty">Noch keine Monatssummen vorhanden.</div>`;
-                container.innerHTML = html;
-                return;
-            }
-
-            html += months.map(([monthKey, values]) => `
-                <div class="month-card">
-                    <div class="month-label">${formatMonthKey(monthKey)}</div>
-                    <div class="month-grid">
-                        <div class="month-row"><span>Ausgaben offen</span><strong class="month-value expense">${formatEuro(values.expenseOpen)}</strong></div>
-                        <div class="month-row"><span>Ausgaben erledigt</span><strong class="month-value expense">${formatEuro(values.expenseDone)}</strong></div>
-                        <div class="month-row"><span>Gutschriften offen</span><strong class="month-value credit">${formatEuro(values.creditOpen)}</strong></div>
-                        <div class="month-row"><span>Gutschriften erledigt</span><strong class="month-value credit">${formatEuro(values.creditDone)}</strong></div>
-                        <div class="month-row"><span>Einnahmen offen</span><strong class="month-value income">${formatEuro(values.incomeOpen)}</strong></div>
-                        <div class="month-row"><span>Einnahmen erledigt</span><strong class="month-value income">${formatEuro(values.incomeDone)}</strong></div>
-                    </div>
-                </div>
-            `).join('');
-
-            container.innerHTML = html;
+        function setFilter(newFilter) {
+            filter = newFilter;
+            render();
         }
 
-        function renderAllList() {
-            const container = document.getElementById('termsList0');
-            let entries = getAllListEntries();
-            entries = applyFilter(entries, filters[0]);
+        /* Backup */
 
-            if (!entries.length) {
-                container.innerHTML = `<div class="terms-empty">Keine Einträge</div>`;
-                return;
-            }
-
-            container.innerHTML = entries.map(entry =>
-                renderItem(entry, entry.sourceTab, TAB_CONFIG[entry.sourceTab].name)
-            ).join('');
-        }
-
-        function renderMixedSummary(tabIndex) {
-            const totals = getMixedRegisterTotals(tabIndex);
-            const container = document.getElementById(`summary${tabIndex}`);
-
-            container.innerHTML = `
-                <div class="summary-card expense">
-                    <div class="summary-label">Belastung offen</div>
-                    <div class="summary-value expense">${formatEuro(totals.expenseOpen)}</div>
-                </div>
-                <div class="summary-card expense">
-                    <div class="summary-label">Belastung erledigt</div>
-                    <div class="summary-value expense">${formatEuro(totals.expenseDone)}</div>
-                </div>
-                <div class="summary-card credit">
-                    <div class="summary-label">Gutschrift offen</div>
-                    <div class="summary-value credit">${formatEuro(totals.creditOpen)}</div>
-                </div>
-                <div class="summary-card credit">
-                    <div class="summary-label">Gutschrift erledigt</div>
-                    <div class="summary-value credit">${formatEuro(totals.creditDone)}</div>
-                </div>
-            `;
-        }
-
-        function renderMixedMonths(tabIndex) {
-            const container = document.getElementById(`monthCards${tabIndex}`);
-            const months = getMixedRegisterMonths(tabIndex);
-
-            if (!months.length) {
-                container.innerHTML = `<div class="month-empty">Noch keine Monatssummen vorhanden.</div>`;
-                return;
-            }
-
-            container.innerHTML = months.map(([monthKey, values]) => `
-                <div class="month-card">
-                    <div class="month-label">${formatMonthKey(monthKey)}</div>
-                    <div class="month-grid">
-                        <div class="month-row"><span>Belastung offen</span><strong class="month-value expense">${formatEuro(values.expenseOpen)}</strong></div>
-                        <div class="month-row"><span>Belastung erledigt</span><strong class="month-value expense">${formatEuro(values.expenseDone)}</strong></div>
-                        <div class="month-row"><span>Gutschrift offen</span><strong class="month-value credit">${formatEuro(values.creditOpen)}</strong></div>
-                        <div class="month-row"><span>Gutschrift erledigt</span><strong class="month-value credit">${formatEuro(values.creditDone)}</strong></div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderSimpleSummary(tabIndex) {
-            const totals = getSimpleRegisterTotals(tabIndex);
-            const container = document.getElementById(`summary${tabIndex}`);
-            const kind = TAB_CONFIG[tabIndex].kind;
-            const cardClass = kind === 'income' ? 'income' : 'sale';
-            const valueClass = kind === 'income' ? 'income' : 'sale';
-            const note = kind === 'sale'
-                ? 'Nur Einträge mit Betrag werden summiert.'
-                : 'Summen enthalten offene und erledigte Posten.';
-
-            container.innerHTML = `
-                <div class="summary-card ${cardClass}">
-                    <div class="summary-label">Summe offen</div>
-                    <div class="summary-value ${valueClass}">${formatEuro(totals.open)}</div>
-                    <div class="summary-sub">${note}</div>
-                </div>
-                <div class="summary-card ${cardClass}">
-                    <div class="summary-label">Summe erledigt</div>
-                    <div class="summary-value ${valueClass}">${formatEuro(totals.done)}</div>
-                    <div class="summary-sub">Erledigte Einträge bleiben unten sichtbar.</div>
-                </div>
-            `;
-        }
-
-        function renderSimpleMonths(tabIndex) {
-            const container = document.getElementById(`monthCards${tabIndex}`);
-            const months = getSimpleRegisterMonths(tabIndex);
-            const valueClass = TAB_CONFIG[tabIndex].kind === 'income' ? 'income' : 'sale';
-
-            if (!months.length) {
-                container.innerHTML = `<div class="month-empty">Noch keine Monatssummen vorhanden.</div>`;
-                return;
-            }
-
-            container.innerHTML = months.map(([monthKey, values]) => `
-                <div class="month-card">
-                    <div class="month-label">${formatMonthKey(monthKey)}</div>
-                    <div class="month-grid">
-                        <div class="month-row"><span>Offen</span><strong class="month-value ${valueClass}">${formatEuro(values.open)}</strong></div>
-                        <div class="month-row"><span>Erledigt</span><strong class="month-value ${valueClass}">${formatEuro(values.done)}</strong></div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderRegisterList(tabIndex) {
-            const container = document.getElementById(`termsList${tabIndex}`);
-            let entries = sortEntries(getEntries(tabIndex));
-            entries = applyFilter(entries, filters[tabIndex]);
-
-            if (!entries.length) {
-                container.innerHTML = `<div class="terms-empty">Keine Einträge</div>`;
-                return;
-            }
-
-            container.innerHTML = entries.map(entry => renderItem(entry, tabIndex)).join('');
-        }
-
-        function getBackupPayload() {
+        function backupPayload() {
             return {
-                app: 'offene-kosten',
-                version: 1,
+                app: "offene-kosten-cloud",
+                version: 2,
                 exportedAt: new Date().toISOString(),
-                currentAccountBalance: localStorage.getItem('currentAccountBalance'),
-                entries: {
-                    1: getEntries(1),
-                    2: getEntries(2),
-                    3: getEntries(3),
-                    4: getEntries(4),
-                    5: getEntries(5)
-                }
+                accountBalance,
+                entries
             };
         }
 
-        function downloadTextFile(content, filename, mimeType = 'application/json') {
-            const blob = new Blob([content], { type: mimeType });
+        function downloadFile(content, filename) {
+            const blob = new Blob([content], { type: "application/json" });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
             setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
 
         async function exportBackup() {
+            const content = JSON.stringify(backupPayload(), null, 2);
+            const filename = `offene-kosten-backup-${todayString()}.json`;
+            const file = new File([content], filename, { type: "application/json" });
+
             try {
-                const payload = getBackupPayload();
-                const content = JSON.stringify(payload, null, 2);
-                const filename = `offene-kosten-backup-${new Date().toISOString().slice(0,10)}.json`;
-                const file = new File([content], filename, { type: 'application/json' });
-
-                if (navigator.share && navigator.canShare) {
-                    try {
-                        if (navigator.canShare({ files: [file] })) {
-                            await navigator.share({
-                                title: 'Backup Offene Kosten',
-                                text: 'Backup der App „Offene Kosten“',
-                                files: [file]
-                            });
-                            return;
-                        }
-                    } catch (err) {
-                        if (err && err.name === 'AbortError') return;
-                    }
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: "Backup Offene Kosten",
+                        text: "Backup der Kosten-App",
+                        files: [file]
+                    });
+                    return;
                 }
-
-                downloadTextFile(content, filename, 'application/json');
-            } catch (err) {
-                alert('Backup konnte nicht erstellt werden.');
-                console.error(err);
+            } catch (error) {
+                if (error.name === "AbortError") return;
             }
+
+            downloadFile(content, filename);
         }
 
         function triggerBackupImport() {
-            const input = document.getElementById('backupFileInput');
-            if (!input) return;
-            input.value = '';
+            const input = document.getElementById("backupInput");
+            input.value = "";
             input.click();
         }
 
-        function handleBackupImport(event) {
-            const file = event.target.files && event.target.files[0];
+        async function handleBackupImport(event) {
+            const file = event.target.files?.[0];
             if (!file) return;
 
-            const confirmImport = confirm('Backup wirklich laden? Der aktuelle Datenstand wird überschrieben.');
-            if (!confirmImport) {
-                event.target.value = '';
+            if (!confirm("Backup wirklich laden? Der aktuelle Cloud-Datenstand wird ersetzt.")) {
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const text = e.target.result;
-                    const data = JSON.parse(text);
+            try {
+                const backup = JSON.parse(await file.text());
 
-                    if (!data || data.app !== 'offene-kosten' || !data.entries) {
-                        throw new Error('Ungültiges Backup-Format');
-                    }
-
-                    for (let i = 1; i <= 5; i++) {
-                        const entries = Array.isArray(data.entries[i]) ? data.entries[i] : [];
-                        saveEntries(i, entries);
-                    }
-
-                    if (data.currentAccountBalance === null || data.currentAccountBalance === undefined || data.currentAccountBalance === '') {
-                        localStorage.removeItem('currentAccountBalance');
-                    } else {
-                        localStorage.setItem('currentAccountBalance', String(data.currentAccountBalance));
-                    }
-
-                    renderEverything();
-                    alert('Backup erfolgreich geladen.');
-                } catch (err) {
-                    alert('Backup konnte nicht geladen werden. Datei prüfen.');
-                    console.error(err);
-                } finally {
-                    event.target.value = '';
+                if (!backup || !Array.isArray(backup.entries)) {
+                    throw new Error("Ungültiges Backup.");
                 }
-            };
 
-            reader.onerror = function() {
-                alert('Datei konnte nicht gelesen werden.');
-                event.target.value = '';
-            };
+                const { error: deleteError } = await db
+                    .from("cost_entries")
+                    .delete()
+                    .neq("id", "00000000-0000-0000-0000-000000000000");
 
-            reader.readAsText(file, 'utf-8');
+                if (deleteError) throw deleteError;
+
+                const rows = backup.entries.map(entry => ({
+                    register: entry.register,
+                    title: entry.title,
+                    amount: entry.amount,
+                    due_date: entry.due_date || entry.date,
+                    note: entry.note || null,
+                    flow: entry.flow,
+                    completed: Boolean(entry.completed)
+                }));
+
+                if (rows.length) {
+                    const { error: insertError } = await db
+                        .from("cost_entries")
+                        .insert(rows);
+
+                    if (insertError) throw insertError;
+                }
+
+                const { error: balanceError } = await db
+                    .from("cost_settings")
+                    .upsert({
+                        user_id: user.id,
+                        current_account_balance: backup.accountBalance ?? null,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: "user_id" });
+
+                if (balanceError) throw balanceError;
+
+                await loadData();
+                alert("Backup erfolgreich geladen.");
+            } catch (error) {
+                alert("Backup konnte nicht geladen werden.\n\n" + (error.message || ""));
+            }
         }
 
+        /* Einmaliger lokaler iPhone-Import */
+
+        async function importLocalIphoneData() {
+            if (!confirm(
+                "Lokale Daten dieses iPhones in die Cloud übertragen?\n\n" +
+                "Bitte nur auf dem iPhone mit deinem führenden Datenbestand ausführen.\n\n" +
+                "Bestehende Cloud-Einträge bleiben dabei erhalten."
+            )) return;
+
+            try {
+                const localRows = [];
+
+                for (let register = 1; register <= 5; register++) {
+                    const raw = localStorage.getItem(`costEntries${register}`);
+                    if (!raw) continue;
+
+                    let localEntries;
+
+                    try {
+                        localEntries = JSON.parse(raw);
+                    } catch {
+                        continue;
+                    }
+
+                    localEntries.forEach(entry => {
+                        let flow = entry.flow;
+
+                        if (!flow) {
+                            if (register <= 3) flow = "expense";
+                            if (register === 4) flow = "income";
+                            if (register === 5) flow = "sale";
+                        }
+
+                        localRows.push({
+                            register,
+                            title: entry.title || "",
+                            amount: entry.amount === null || entry.amount === undefined ? null : Number(entry.amount),
+                            due_date: entry.date,
+                            note: entry.note || null,
+                            flow,
+                            completed: Boolean(entry.completed)
+                        });
+                    });
+                }
+
+                const localBalanceRaw = localStorage.getItem("currentAccountBalance");
+                const localBalance = localBalanceRaw ? Number(localBalanceRaw) : null;
+
+                if (!localRows.length && localBalance === null) {
+                    alert("Auf diesem Gerät wurden keine lokalen Kosten-Daten gefunden.");
+                    return;
+                }
+
+                if (localRows.length) {
+                    const { error } = await db
+                        .from("cost_entries")
+                        .insert(localRows);
+
+                    if (error) throw error;
+                }
+
+                if (localBalance !== null) {
+                    const { error } = await db
+                        .from("cost_settings")
+                        .upsert({
+                            user_id: user.id,
+                            current_account_balance: localBalance,
+                            updated_at: new Date().toISOString()
+                        }, { onConflict: "user_id" });
+
+                    if (error) throw error;
+                }
+
+                await loadData();
+                alert(`${localRows.length} lokale Einträge wurden in die Cloud übertragen.`);
+            } catch (error) {
+                alert("Lokale Daten konnten nicht übertragen werden.\n\n" + (error.message || ""));
+            }
+        }
+
+        /* PDF */
+
         function exportToPDF() {
-            const allTotals = getAllTotals();
-            const balance = getAccountBalance();
+            const total = allTotals();
 
             let html = `
                 <style>
-                    @page {
-                        size: A4;
-                        margin: 10mm;
-                    }
-
-                    body {
-                        font-family: Arial, sans-serif;
-                        color: #222;
-                        font-size: 12px;
-                        line-height: 1.35;
-                    }
-
-                    .pdf-wrap {
-                        max-width: 850px;
-                        margin: 0 auto;
-                    }
-
-                    .pdf-title {
-                        text-align: center;
-                        color: #910c93;
-                        margin: 0 0 8px;
-                        font-size: 24px;
-                    }
-
-                    .pdf-subtitle {
-                        text-align: center;
-                        color: #666;
-                        margin: 0 0 20px;
-                        font-size: 12px;
-                    }
-
-                    .pdf-section {
-                        margin-bottom: 18px;
-                    }
-
-                    .pdf-section h2 {
-                        color: #910c93;
-                        border-bottom: 2px solid #910c93;
-                        padding-bottom: 6px;
-                        margin: 0 0 10px;
-                        font-size: 18px;
-                        page-break-after: avoid;
-                    }
-
-                    .pdf-note {
-                        margin: 8px 0 12px;
-                        color: #444;
-                        font-size: 12px;
-                        line-height: 1.4;
-                    }
-
-                    table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        margin-bottom: 14px;
-                        font-size: 11px;
-                    }
-
-                    thead {
-                        display: table-header-group;
-                    }
-
-                    tr, td, th {
-                        break-inside: avoid;
-                        page-break-inside: avoid;
-                    }
-
-                    th {
-                        background: #f5f5f5;
-                        text-align: left;
-                        font-weight: 700;
-                    }
-
-                    th, td {
-                        border: 1px solid #ddd;
-                        padding: 7px 8px;
-                        vertical-align: top;
-                    }
-
-                    td.num, th.num {
-                        text-align: right;
-                        white-space: nowrap;
-                    }
-
-                    .small {
-                        font-size: 10px;
-                        color: #666;
-                    }
-
-                    .footer {
-                        margin-top: 20px;
-                        padding-top: 12px;
-                        border-top: 1px solid #ddd;
-                        color: #888;
-                        font-size: 11px;
-                    }
+                    @page { size: A4; margin: 10mm; }
+                    body { font-family: Arial, sans-serif; color: #222; font-size: 11px; }
+                    h1 { color: #910c93; text-align: center; }
+                    h2 { color: #910c93; border-bottom: 2px solid #910c93; padding-bottom: 5px; page-break-after: avoid; }
+                    .section { margin-bottom: 18px; }
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+                    th, td { border: 1px solid #ddd; padding: 7px; vertical-align: top; }
+                    th { background: #f5f5f5; text-align: left; }
+                    td.num { text-align: right; white-space: nowrap; }
+                    tr { page-break-inside: avoid; }
+                    thead { display: table-header-group; }
                 </style>
 
-                <div class="pdf-wrap">
-                    <h1 class="pdf-title">💶 Offene Kosten</h1>
-                    <p class="pdf-subtitle">Erstellt am ${new Date().toLocaleDateString('de-DE')}</p>
+                <h1>💶 Offene Kosten</h1>
+                <p style="text-align:center;color:#666;">Erstellt am ${new Date().toLocaleDateString("de-DE")}</p>
 
-                    <div class="pdf-section">
-                        <h2>Gesamtübersicht</h2>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Bereich</th>
-                                    <th class="num">Betrag</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr><td>Aktueller Kontostand</td><td class="num">${balance !== null ? formatEuro(balance) : 'nicht gesetzt'}</td></tr>
-                                <tr><td>Ausgaben offen</td><td class="num">${formatEuro(allTotals.expenseOpen)}</td></tr>
-                                <tr><td>Ausgaben erledigt</td><td class="num">${formatEuro(allTotals.expenseDone)}</td></tr>
-                                <tr><td>Gutschriften offen</td><td class="num">${formatEuro(allTotals.creditOpen)}</td></tr>
-                                <tr><td>Gutschriften erledigt</td><td class="num">${formatEuro(allTotals.creditDone)}</td></tr>
-                                <tr><td>Einnahmen offen</td><td class="num">${formatEuro(allTotals.incomeOpen)}</td></tr>
-                                <tr><td>Einnahmen erledigt</td><td class="num">${formatEuro(allTotals.incomeDone)}</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="section">
+                    <h2>Gesamtübersicht</h2>
+                    <table>
+                        <tr><th>Bereich</th><th class="num">Betrag</th></tr>
+                        <tr><td>Aktueller Kontostand</td><td class="num">${accountBalance === null ? "nicht gesetzt" : formatEuro(accountBalance)}</td></tr>
+                        <tr><td>Ausgaben offen</td><td class="num">${formatEuro(total.expenseOpen)}</td></tr>
+                        <tr><td>Ausgaben erledigt</td><td class="num">${formatEuro(total.expenseDone)}</td></tr>
+                        <tr><td>Gutschriften offen</td><td class="num">${formatEuro(total.creditOpen)}</td></tr>
+                        <tr><td>Gutschriften erledigt</td><td class="num">${formatEuro(total.creditDone)}</td></tr>
+                        <tr><td>Einnahmen offen</td><td class="num">${formatEuro(total.incomeOpen)}</td></tr>
+                        <tr><td>Einnahmen erledigt</td><td class="num">${formatEuro(total.incomeDone)}</td></tr>
+                    </table>
+                </div>
             `;
 
-            for (let i = 1; i <= 5; i++) {
-                const config = TAB_CONFIG[i];
-                const entries = sortEntries(getEntries(i));
+            for (let register = 1; register <= 5; register++) {
+                const info = REGISTERS[register];
+                const list = entries
+                    .filter(entry => entry.register === register)
+                    .sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
 
-                html += `<div class="pdf-section">`;
-                html += `<h2>${config.name}</h2>`;
+                html += `<div class="section"><h2>${info.name}</h2>`;
 
-                if (config.kind === 'mixed') {
-                    const totals = getMixedRegisterTotals(i);
-                    html += `
-                        <p class="pdf-note">
-                            <strong>Belastung offen:</strong> ${formatEuro(totals.expenseOpen)} &nbsp; | &nbsp;
-                            <strong>Belastung erledigt:</strong> ${formatEuro(totals.expenseDone)}<br>
-                            <strong>Gutschrift offen:</strong> ${formatEuro(totals.creditOpen)} &nbsp; | &nbsp;
-                            <strong>Gutschrift erledigt:</strong> ${formatEuro(totals.creditDone)}
-                        </p>
-                    `;
-                } else {
-                    const totals = getSimpleRegisterTotals(i);
-                    html += `
-                        <p class="pdf-note">
-                            <strong>Offen:</strong> ${formatEuro(totals.open)} &nbsp; | &nbsp;
-                            <strong>Erledigt:</strong> ${formatEuro(totals.done)}
-                            ${i === 5 ? '<br><span class="small">Nur Einträge mit Betrag werden summiert. Register ist nicht in der Gesamtübersicht enthalten.</span>' : ''}
-                        </p>
-                    `;
-                }
-
-                if (!entries.length) {
-                    html += `<p class="small">Keine Einträge vorhanden.</p>`;
-                    html += `</div>`;
+                if (!list.length) {
+                    html += `<p>Keine Einträge vorhanden.</p></div>`;
                     continue;
                 }
 
@@ -2698,75 +2027,72 @@
                         <tbody>
                 `;
 
-                entries.forEach(entry => {
+                list.forEach(entry => {
                     html += `
                         <tr>
-                            <td>${entry.completed ? 'Erledigt' : 'Offen'}</td>
-                            <td>${getFlowLabel(entry)}</td>
-                            <td>${formatDate(entry.date)}</td>
-                            <td>${escapeHtml(entry.title)}</td>
-                            <td class="num">${entry.amount != null ? formatEuro(entry.amount) : '—'}</td>
-                            <td>${entry.note ? escapeHtml(entry.note) : '—'}</td>
+                            <td>${entry.completed ? "Erledigt" : "Offen"}</td>
+                            <td>${flowLabel(entry.flow)}</td>
+                            <td>${formatDate(entry.due_date)}</td>
+                            <td>${esc(entry.title)}</td>
+                            <td class="num">${entry.amount === null ? "—" : formatEuro(entry.amount)}</td>
+                            <td>${entry.note ? esc(entry.note) : "—"}</td>
                         </tr>
                     `;
                 });
 
-                html += `
-                        </tbody>
-                    </table>
-                </div>
-                `;
+                html += `</tbody></table></div>`;
             }
-
-            html += `
-                    <div class="footer">
-                        Export aus der App „Offene Kosten“
-                    </div>
-                </div>
-            `;
 
             html2pdf().set({
                 margin: [8, 8, 8, 8],
-                filename: `Offene-Kosten-${new Date().toLocaleDateString('de-DE')}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: {
-                    scale: 1.5,
-                    useCORS: true
-                },
-                jsPDF: {
-                    orientation: 'portrait',
-                    unit: 'mm',
-                    format: 'a4'
-                },
-                pagebreak: {
-                    mode: ['css', 'legacy']
-                }
+                filename: `Offene-Kosten-${todayString()}.pdf`,
+                image: { type: "jpeg", quality: 0.98 },
+                html2canvas: { scale: 1.5, useCORS: true },
+                jsPDF: { orientation: "portrait", unit: "mm", format: "a4" },
+                pagebreak: { mode: ["css", "legacy"] }
             }).from(html).save();
         }
 
-        function renderEverything() {
-            renderAllSummary();
-            renderAllMonths();
-            renderAllList();
+        /* Start und Synchronisation */
 
-            for (let i = 1; i <= 5; i++) {
-                if (TAB_CONFIG[i].kind === 'mixed') {
-                    renderMixedSummary(i);
-                    renderMixedMonths(i);
-                } else {
-                    renderSimpleSummary(i);
-                    renderSimpleMonths(i);
-                }
-                renderRegisterList(i);
+        async function applySession(session) {
+            user = session?.user || null;
+
+            if (!user) {
+                document.getElementById("authScreen").style.display = "block";
+                document.getElementById("appShell").style.display = "none";
+                document.getElementById("fabBtn").classList.add("hidden");
+                return;
             }
+
+            document.getElementById("authScreen").style.display = "none";
+            document.getElementById("appShell").style.display = "block";
+
+            await loadData();
         }
 
-        function init() {
-            renderEverything();
-            updateFab();
-        }
+        db.auth.onAuthStateChange((_event, session) => {
+            applySession(session);
+        });
 
-        init();
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden && user) {
+                loadData();
+            }
+        });
+
+        window.addEventListener("focus", () => {
+            if (user) loadData();
+        });
+
+        setInterval(() => {
+            if (user && !document.hidden) loadData();
+        }, 30000);
+
+        (async function init() {
+            const { data } = await db.auth.getSession();
+            await applySession(data.session);
+        })();
     </script>
 </body>
 </html>
