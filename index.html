@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Offene Kosten</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
@@ -37,6 +38,534 @@
             color: var(--text);
             background: #000;
         }
+<style>
+    /* Zentraler Speicher: Anmeldung */
+    #cloudAuthOverlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(9, 7, 12, 0.78);
+        backdrop-filter: blur(8px);
+    }
+
+    .cloud-auth-box {
+        width: 100%;
+        max-width: 420px;
+        padding: 24px 20px;
+        border-radius: 24px;
+        background: #fff;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .cloud-auth-icon {
+        width: 58px;
+        height: 58px;
+        display: grid;
+        place-items: center;
+        margin: 0 auto 13px;
+        border-radius: 18px;
+        background: #910c93;
+        color: #fff;
+        font-size: 1.8rem;
+    }
+
+    .cloud-auth-box h2 {
+        margin: 0;
+        color: #910c93;
+        text-align: center;
+        font-size: 1.45rem;
+    }
+
+    .cloud-auth-box p {
+        margin: 9px 0 20px;
+        color: #666;
+        text-align: center;
+        line-height: 1.4;
+        font-size: 0.95rem;
+    }
+
+    .cloud-auth-box label {
+        display: block;
+        margin: 12px 0 6px;
+        color: #333;
+        font-size: 0.95rem;
+        font-weight: 800;
+    }
+
+    .cloud-auth-box input {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid #ddd;
+        border-radius: 14px;
+        font-size: 1rem;
+        font-family: inherit;
+    }
+
+    .cloud-auth-box input:focus {
+        outline: none;
+        border-color: #910c93;
+        box-shadow: 0 0 0 4px rgba(145, 12, 147, 0.12);
+    }
+
+    .cloud-auth-primary,
+    .cloud-auth-secondary {
+        width: 100%;
+        min-height: 50px;
+        margin-top: 18px;
+        border: 0;
+        border-radius: 14px;
+        font-size: 1rem;
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+    .cloud-auth-primary {
+        background: #910c93;
+        color: #fff;
+    }
+
+    .cloud-auth-secondary {
+        margin-top: 10px;
+        background: transparent;
+        color: #910c93;
+    }
+
+    #cloudAuthMessage {
+        min-height: 20px;
+        margin-top: 12px;
+        color: #c0392b;
+        text-align: center;
+        font-size: 0.9rem;
+    }
+
+    #cloudSyncBadge {
+        position: fixed;
+        right: 14px;
+        bottom: calc(env(safe-area-inset-bottom) + 92px);
+        z-index: 60;
+        display: none;
+        max-width: 225px;
+        padding: 8px 11px;
+        border: 0;
+        border-radius: 999px;
+        background: rgba(30, 25, 34, 0.9);
+        color: #fff;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .cloud-auth-box {
+            background: #19141e;
+            color: #f4eef8;
+        }
+
+        .cloud-auth-box p,
+        .cloud-auth-box label {
+            color: #d8cae4;
+        }
+
+        .cloud-auth-box input {
+            border-color: #4a3a55;
+            background: #17121c;
+            color: #f4eef8;
+        }
+
+        .cloud-auth-box input::placeholder {
+            color: #8f7fa1;
+        }
+    }
+</style>
+
+<div id="cloudAuthOverlay">
+    <div class="cloud-auth-box">
+        <div class="cloud-auth-icon">☁️</div>
+        <h2 id="cloudAuthTitle">Kosten-App anmelden</h2>
+        <p id="cloudAuthText">
+            Melde dich an, damit deine Daten auf allen Geräten synchron bleiben.
+        </p>
+
+        <label for="cloudAuthEmail">E-Mail-Adresse</label>
+        <input id="cloudAuthEmail" type="email" inputmode="email"
+               autocomplete="email" placeholder="name@beispiel.de">
+
+        <label for="cloudAuthPassword">Passwort</label>
+        <input id="cloudAuthPassword" type="password"
+               autocomplete="current-password" placeholder="Mindestens 8 Zeichen">
+
+        <button class="cloud-auth-primary" id="cloudAuthSubmit"
+                onclick="cloudHandleAuth()">
+            Anmelden
+        </button>
+
+        <button class="cloud-auth-secondary" id="cloudAuthSwitch"
+                onclick="cloudToggleMode()">
+            Noch kein Konto? Registrieren
+        </button>
+
+        <div id="cloudAuthMessage"></div>
+    </div>
+</div>
+
+<button id="cloudSyncBadge" onclick="cloudSignOut()">
+    ☁️ Synchronisiert
+</button>
+
+<script>
+    /* ============================================================
+       SUPABASE: HIER DEINE BEIDEN WERTE EINTRAGEN
+       ============================================================ */
+
+    const CLOUD_SUPABASE_URL = "https://guhugeusbbusknuixuxy.supabase.co/rest/v1/";
+    const CLOUD_SUPABASE_KEY = "sb_publishable_QhP4TFOvspuVa1s_w5EpUA_1m0vXGdn";
+
+    const cloudSupabase = supabase.createClient(
+        CLOUD_SUPABASE_URL,
+        CLOUD_SUPABASE_KEY
+    );
+
+    let cloudUser = null;
+    let cloudAuthMode = "login";
+    let cloudReady = false;
+    let cloudSaving = false;
+    let cloudSaveTimer = null;
+
+    const CLOUD_LOCAL_KEYS = [
+        "costEntries1",
+        "costEntries2",
+        "costEntries3",
+        "costEntries4",
+        "costEntries5",
+        "currentAccountBalance"
+    ];
+
+    function cloudSetMessage(message = "", isSuccess = false) {
+        const box = document.getElementById("cloudAuthMessage");
+        box.textContent = message;
+        box.style.color = isSuccess ? "#1f9d55" : "#c0392b";
+    }
+
+    function cloudToggleMode() {
+        cloudAuthMode = cloudAuthMode === "login" ? "signup" : "login";
+
+        document.getElementById("cloudAuthTitle").textContent =
+            cloudAuthMode === "login"
+                ? "Kosten-App anmelden"
+                : "Konto erstellen";
+
+        document.getElementById("cloudAuthText").textContent =
+            cloudAuthMode === "login"
+                ? "Melde dich an, damit deine Daten auf allen Geräten synchron bleiben."
+                : "Erstelle dein persönliches Konto für die zentrale Synchronisation.";
+
+        document.getElementById("cloudAuthSubmit").textContent =
+            cloudAuthMode === "login" ? "Anmelden" : "Konto erstellen";
+
+        document.getElementById("cloudAuthSwitch").textContent =
+            cloudAuthMode === "login"
+                ? "Noch kein Konto? Registrieren"
+                : "Schon registriert? Anmelden";
+
+        cloudSetMessage("");
+    }
+
+    async function cloudHandleAuth() {
+        const email = document.getElementById("cloudAuthEmail").value.trim();
+        const password = document.getElementById("cloudAuthPassword").value;
+
+        if (!email || !password) {
+            cloudSetMessage("Bitte E-Mail-Adresse und Passwort eingeben.");
+            return;
+        }
+
+        if (password.length < 8) {
+            cloudSetMessage("Das Passwort muss mindestens 8 Zeichen haben.");
+            return;
+        }
+
+        const button = document.getElementById("cloudAuthSubmit");
+        button.disabled = true;
+        button.textContent =
+            cloudAuthMode === "login"
+                ? "Anmeldung läuft …"
+                : "Konto wird erstellt …";
+
+        try {
+            if (cloudAuthMode === "signup") {
+                const { data, error } = await cloudSupabase.auth.signUp({
+                    email,
+                    password
+                });
+
+                if (error) throw error;
+
+                if (!data.session) {
+                    cloudSetMessage(
+                        "Konto erstellt. Bitte ggf. E-Mail bestätigen und danach anmelden.",
+                        true
+                    );
+                }
+            } else {
+                const { error } = await cloudSupabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+
+                if (error) throw error;
+            }
+        } catch (error) {
+            cloudSetMessage(error.message || "Anmeldung nicht möglich.");
+        } finally {
+            button.disabled = false;
+            button.textContent =
+                cloudAuthMode === "login" ? "Anmelden" : "Konto erstellen";
+        }
+    }
+
+    function cloudGetLocalData() {
+        const data = {};
+
+        CLOUD_LOCAL_KEYS.forEach(key => {
+            data[key] = localStorage.getItem(key);
+        });
+
+        return data;
+    }
+
+    function cloudHasAnyLocalData() {
+        return CLOUD_LOCAL_KEYS.some(key => {
+            const value = localStorage.getItem(key);
+
+            if (!value) return false;
+
+            if (key.startsWith("costEntries")) {
+                try {
+                    return JSON.parse(value).length > 0;
+                } catch {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }
+
+    function cloudApplyData(data) {
+        if (!data) return;
+
+        CLOUD_LOCAL_KEYS.forEach(key => {
+            const value = data[key];
+
+            if (value === null || value === undefined || value === "") {
+                localStorage.removeItem(key);
+            } else {
+                localStorage.setItem(key, value);
+            }
+        });
+
+        if (typeof renderEverything === "function") {
+            renderEverything();
+        }
+    }
+
+    function cloudShowBadge(text = "☁️ Synchronisiert") {
+        const badge = document.getElementById("cloudSyncBadge");
+        badge.textContent = text;
+        badge.style.display = "block";
+    }
+
+    async function cloudLoadOrCreateData() {
+        if (!cloudUser) return;
+
+        const { data, error } = await cloudSupabase
+            .from("cost_settings")
+            .select("app_data")
+            .eq("user_id", cloudUser.id)
+            .maybeSingle();
+
+        if (error) {
+            console.error(error);
+            cloudShowBadge("☁️ Sync-Fehler");
+            alert("Cloud-Daten konnten nicht geladen werden: " + error.message);
+            return;
+        }
+
+        if (data && data.app_data) {
+            cloudApplyData(data.app_data);
+            cloudShowBadge("☁️ Synchronisiert");
+        } else {
+            /*
+             * Beim allerersten Start:
+             * Auf dem iPhone werden die vorhandenen lokalen Daten
+             * automatisch als erster Cloud-Stand gespeichert.
+             */
+            await cloudSaveNow(true);
+
+            cloudShowBadge(
+                cloudHasAnyLocalData()
+                    ? "☁️ iPhone-Daten übertragen"
+                    : "☁️ Neue Cloud-Datenbank"
+            );
+        }
+
+        cloudReady = true;
+    }
+
+    async function cloudSaveNow(firstSave = false) {
+        if (!cloudUser || cloudSaving) return;
+
+        cloudSaving = true;
+
+        try {
+            const payload = {
+                user_id: cloudUser.id,
+                app_data: cloudGetLocalData(),
+                updated_at: new Date().toISOString()
+            };
+
+            const { error } = await cloudSupabase
+                .from("cost_settings")
+                .upsert(payload, { onConflict: "user_id" });
+
+            if (error) throw error;
+
+            cloudShowBadge(
+                firstSave
+                    ? "☁️ Cloud-Speicher aktiv"
+                    : "☁️ Synchronisiert"
+            );
+        } catch (error) {
+            console.error(error);
+            cloudShowBadge("☁️ Sync-Fehler");
+        } finally {
+            cloudSaving = false;
+        }
+    }
+
+    function cloudQueueSave() {
+        if (!cloudReady || !cloudUser) return;
+
+        clearTimeout(cloudSaveTimer);
+
+        cloudShowBadge("☁️ Speichert …");
+
+        cloudSaveTimer = setTimeout(() => {
+            cloudSaveNow();
+        }, 700);
+    }
+
+    async function cloudImportLocalDataAgain() {
+        if (!cloudUser) return;
+
+        const confirmed = confirm(
+            "Lokale Daten dieses Geräts in die Cloud übertragen?\n\n" +
+            "Achtung: Der aktuelle Cloud-Datenstand wird dabei vollständig ersetzt.\n\n" +
+            "Das bitte nur auf dem iPhone mit deinem führenden Datenbestand ausführen."
+        );
+
+        if (!confirmed) return;
+
+        await cloudSaveNow(true);
+        alert("Lokale Daten wurden in die Cloud übertragen.");
+    }
+
+    async function cloudSignOut() {
+        const confirmed = confirm("Wirklich aus der Kosten-App abmelden?");
+        if (!confirmed) return;
+
+        await cloudSupabase.auth.signOut();
+    }
+
+    /*
+     * Bestehende App-Funktionen schreiben weiter in localStorage.
+     * Dieser kleine Hook erkennt jede Änderung und synchronisiert sie.
+     */
+    const originalSetItem = localStorage.setItem.bind(localStorage);
+    const originalRemoveItem = localStorage.removeItem.bind(localStorage);
+
+    localStorage.setItem = function(key, value) {
+        originalSetItem(key, value);
+
+        if (CLOUD_LOCAL_KEYS.includes(key)) {
+            cloudQueueSave();
+        }
+    };
+
+    localStorage.removeItem = function(key) {
+        originalRemoveItem(key);
+
+        if (CLOUD_LOCAL_KEYS.includes(key)) {
+            cloudQueueSave();
+        }
+    };
+
+    /*
+     * Auch beim Zurückkehren in die App wird der aktuelle Stand geladen.
+     */
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden && cloudReady) {
+            cloudLoadOrCreateData();
+        }
+    });
+
+    window.addEventListener("focus", () => {
+        if (cloudReady) {
+            cloudLoadOrCreateData();
+        }
+    });
+
+    /*
+     * Optionaler Button-Zusatz zur vorhandenen App.
+     * Er erscheint im Register „Alle“ unter den Backup-Buttons.
+     */
+    window.addEventListener("load", () => {
+        setTimeout(() => {
+            const toolRow = document.querySelector('[data-tab="0"] .tool-row');
+
+            if (toolRow && !document.getElementById("cloudImportButton")) {
+                const button = document.createElement("button");
+                button.id = "cloudImportButton";
+                button.className = "tool-btn secondary";
+                button.textContent = "Lokale Daten in Cloud übertragen";
+                button.onclick = cloudImportLocalDataAgain;
+
+                toolRow.appendChild(button);
+            }
+        }, 500);
+    });
+
+    cloudSupabase.auth.onAuthStateChange(async (_event, session) => {
+        cloudUser = session?.user || null;
+
+        if (!cloudUser) {
+            cloudReady = false;
+            document.getElementById("cloudAuthOverlay").style.display = "flex";
+            document.getElementById("cloudSyncBadge").style.display = "none";
+            return;
+        }
+
+        document.getElementById("cloudAuthOverlay").style.display = "none";
+
+        await cloudLoadOrCreateData();
+    });
+
+    (async function cloudInit() {
+        const { data } = await cloudSupabase.auth.getSession();
+        cloudUser = data.session?.user || null;
+
+        if (cloudUser) {
+            document.getElementById("cloudAuthOverlay").style.display = "none";
+            await cloudLoadOrCreateData();
+        }
+    })();
+</script>
 
         body {
             background-image: url('hintergrund.jpg');
